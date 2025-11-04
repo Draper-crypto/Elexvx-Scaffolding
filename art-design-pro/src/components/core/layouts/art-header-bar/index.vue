@@ -191,7 +191,6 @@
   import { LanguageEnum, MenuTypeEnum } from '@/enums/appEnum'
   import { useSettingStore } from '@/store/modules/setting'
   import { useUserStore } from '@/store/modules/user'
-  import { useMenuStore } from '@/store/modules/menu'
   import AppConfig from '@/config'
   import { languageOptions } from '@/locales'
   import { WEB_LINKS } from '@/utils/constants'
@@ -199,6 +198,7 @@
   import { themeAnimation } from '@/utils/theme/animation'
   import { useCommon } from '@/composables/useCommon'
   import { useHeaderBar } from '@/composables/useHeaderBar'
+  import { getRuntimeMenuList } from '@/router/utils/registerRoutes'
 
   defineOptions({ name: 'ArtHeaderBar' })
 
@@ -211,7 +211,6 @@
 
   const settingStore = useSettingStore()
   const userStore = useUserStore()
-  const menuStore = useMenuStore()
 
   // 顶部栏功能配置
   const {
@@ -233,7 +232,8 @@
     storeToRefs(settingStore)
 
   const { language, getUserInfo: userInfo } = storeToRefs(userStore)
-  const { menuList } = storeToRefs(menuStore)
+  // 顶部菜单使用运行时菜单，避免依赖 Pinia 存储
+  const menuList = computed(() => getRuntimeMenuList())
 
   const showNotice = ref(false)
   const notice = ref(null)

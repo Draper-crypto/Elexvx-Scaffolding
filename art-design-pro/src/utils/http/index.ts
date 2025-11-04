@@ -78,11 +78,12 @@ axiosInstance.interceptors.response.use(
 
     const { code, msg } = data as Http.BaseResponse
     if (code === ApiStatus.success) return response
-    if (code === ApiStatus.unauthorized) handleUnauthorizedError(msg)
+    if (code === ApiStatus.unauthorized || code === ApiStatus.forbidden) handleUnauthorizedError(msg)
     throw createHttpError(msg || $t('httpMsg.requestFailed'), code)
   },
   (error) => {
-    if (error.response?.status === ApiStatus.unauthorized) handleUnauthorizedError()
+    const status = error.response?.status
+    if (status === ApiStatus.unauthorized || status === ApiStatus.forbidden) handleUnauthorizedError()
     return Promise.reject(handleError(error))
   }
 )

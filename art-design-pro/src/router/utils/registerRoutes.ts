@@ -6,7 +6,7 @@ import type { Router, RouteRecordRaw } from 'vue-router'
 import type { AppRouteRecord } from '@/types/router'
 import { saveIframeRoutes } from './menuToRouter'
 import { h } from 'vue'
-import { useMenuStore } from '@/store/modules/menu'
+// 注意：不再将移除函数存入 Pinia，改为模块级内存存储
 import { RoutesAlias } from '../routesAlias'
 
 /**
@@ -21,6 +21,8 @@ const modules: Record<string, () => Promise<any>> = import.meta.glob('../../view
  * @param menuList 接口返回的菜单列表
  */
 export function registerDynamicRoutes(router: Router, menuList: AppRouteRecord[]): void {
+  // 记录运行时菜单列表（仅内存，不入 store）
+  runtimeMenuList = menuList
   // 用于局部收集 iframe 类型路由
   const iframeRoutes: AppRouteRecord[] = []
   // 收集路由移除函数
@@ -34,18 +36,56 @@ export function registerDynamicRoutes(router: Router, menuList: AppRouteRecord[]
     // 只有还没注册过的路由才进行注册
     if (route.name && !router.hasRoute(route.name)) {
       const routeConfig = convertRouteComponent(route, iframeRoutes)
+      // 外链（非 iframe）或无组件且无子路由的项不需要注册到 Router，避免非法 path 导致错误
+      const hasComponent = !!(routeConfig as RouteRecordRaw).component
+      const hasChildren = Array.isArray((routeConfig as RouteRecordRaw).children) &&
+        ((routeConfig as RouteRecordRaw).children as RouteRecordRaw[]).length > 0
+      const isExternalLink = !!route.meta?.link && !route.meta?.isIframe
+      if (!hasComponent && !hasChildren) {
+        console.warn(`[路由跳过] ${String(route.name)} 无组件且无子路由，不注册到 Router。`)
+        return
+      }
+      if (isExternalLink) {
+        console.info(`[外链菜单] ${String(route.name)} 为非 iframe 外链，跳过 Router 注册。`)
+        return
+      }
       // addRoute 返回移除函数，收集起来
       const removeRouteFn = router.addRoute(routeConfig as RouteRecordRaw)
       removeRouteFns.push(removeRouteFn)
     }
   })
 
-  // 将移除函数存储到 store 中
-  const menuStore = useMenuStore()
-  menuStore.addRemoveRouteFns(removeRouteFns)
+  // 将移除函数存入模块级内存，避免在前端存储路由数据到 store
+  registeredRouteRemoveFns.push(...removeRouteFns)
 
   // 保存 iframe 路由
   saveIframeRoutes(iframeRoutes)
+}
+
+/**
+ * 模块级：已注册动态路由的移除函数集合
+ * 仅驻留于内存，不写入任何 store
+ */
+const registeredRouteRemoveFns: (() => void)[] = []
+let runtimeMenuList: AppRouteRecord[] = []
+
+/** 获取运行时菜单列表（仅内存） */
+export function getRuntimeMenuList(): AppRouteRecord[] {
+  return runtimeMenuList
+}
+
+/**
+ * 移除所有已注册的动态路由（内存级）
+ */
+export function removeAllDynamicRoutes(): void {
+  registeredRouteRemoveFns.forEach((fn) => {
+    try {
+      fn()
+    } catch (e) {
+      console.warn('移除动态路由失败', e)
+    }
+  })
+  registeredRouteRemoveFns.length = 0
 }
 
 /**
@@ -216,6 +256,7 @@ function handleIframeRoute(
     targetRoute.component = LAYOUT_VIEW
     targetRoute.path = `/${(sourceRoute.path?.split('/')[1] || '').trim()}`
     targetRoute.name = ''
+    targetRoute.meta = sourceRoute.meta // 保留顶级菜单的 meta
 
     targetRoute.children = [
       {
@@ -243,6 +284,7 @@ function handleLayoutRoute(
   converted.component = () => import('@/views/index/index.vue')
   converted.path = `/${(route.path?.split('/')[1] || '').trim()}`
   converted.name = ''
+  converted.meta = route.meta // 保留顶级菜单的 meta
   route.meta.isFirstLevel = true
 
   converted.children = [

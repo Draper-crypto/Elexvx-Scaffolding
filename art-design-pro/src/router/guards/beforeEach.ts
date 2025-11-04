@@ -6,16 +6,20 @@ import { useUserStore } from '@/store/modules/user'
 import { useMenuStore } from '@/store/modules/menu'
 import { setWorktab } from '@/utils/navigation'
 import { setPageTitle } from '../utils/utils'
-import { fetchGetMenuList } from '@/api/system-manage'
+import { fetchGetMenuList, fetchImportMenus } from '@/api/system-manage'
 import { registerDynamicRoutes } from '../utils/registerRoutes'
 import { AppRouteRecord } from '@/types/router'
 import { RoutesAlias } from '../routesAlias'
 import { menuDataToRouter } from '../utils/menuToRouter'
 import { asyncRoutes } from '../routes/asyncRoutes'
 import { staticRoutes } from '../routes/staticRoutes'
+import { routeModules } from '@/router/modules'
 import { loadingService } from '@/utils/ui'
 import { useCommon } from '@/composables/useCommon'
 import { useWorktabStore } from '@/store/modules/worktab'
+import { removeAllDynamicRoutes } from '../utils/registerRoutes'
+import { getFirstMenuPath } from '@/utils'
+import { HOME_PAGE_PATH } from '@/router'
 import { fetchGetUserInfo } from '@/api/auth'
 import { ApiStatus } from '@/utils/http/status'
 import { HttpError, isHttpError } from '@/utils/http/error'
@@ -226,7 +230,9 @@ async function processFrontendMenu(router: Router): Promise<void> {
     throw new Error('获取用户角色失败')
   }
 
-  const filteredMenuList = filterMenuByRoles(menuList, roles)
+  // 过滤演示菜单后，再根据角色过滤
+  const demoFiltered = filterDemoMenus(menuList)
+  const filteredMenuList = filterMenuByRoles(demoFiltered, roles)
 
   await registerAndStoreMenu(router, filteredMenuList)
 }
@@ -235,9 +241,25 @@ async function processFrontendMenu(router: Router): Promise<void> {
  * 处理后端控制模式的菜单逻辑
  */
 async function processBackendMenu(router: Router): Promise<void> {
-  const list = await fetchGetMenuList()
+  let list: any[] = []
+  try {
+    list = await fetchGetMenuList()
+  } catch (error) {
+    console.warn('后端菜单获取失败，使用静态路由作为回退', error)
+    list = []
+  }
+
+  // 后端返回为空或失败时，使用静态路由作为回退，确保开发环境侧边栏可用
+  if (!Array.isArray(list) || list.length === 0) {
+    const fallbackMenuList = routeModules.map((route) => menuDataToRouter(route))
+    const filteredFallback = filterDemoMenus(fallbackMenuList)
+    await registerAndStoreMenu(router, filteredFallback)
+    return
+  }
+
   const menuList = list.map((route) => menuDataToRouter(route))
-  await registerAndStoreMenu(router, menuList)
+  const filteredMenuList = filterDemoMenus(menuList)
+  await registerAndStoreMenu(router, filteredMenuList)
 }
 
 /**
@@ -287,10 +309,57 @@ async function registerAndStoreMenu(router: Router, menuList: AppRouteRecord[]):
   const menuStore = useMenuStore()
   // 递归过滤掉为空的菜单项
   const list = filterEmptyMenus(menuList)
-  menuStore.setMenuList(list)
-  registerDynamicRoutes(router, list)
+  const deduped = dedupeMenus(list)
+  // 不再存储菜单列表，仅注册路由
+  registerDynamicRoutes(router, deduped)
+  // 仅更新首页路径，保证根路径跳转
+  menuStore.setHomePath(HOME_PAGE_PATH || getFirstMenuPath(deduped))
   isRouteRegistered.value = true
   useWorktabStore().validateWorktabs(router)
+}
+
+/**
+ * 过滤演示/模板/示例等菜单项（递归）
+ */
+function filterDemoMenus(menuList: AppRouteRecord[]): AppRouteRecord[] {
+  const demoPrefixes = [
+    '/template',
+    '/widgets',
+    '/examples',
+    '/article',
+    '/result',
+    '/exception',
+    '/safeguard',
+    '/change',
+    '/system/nested'
+  ]
+
+  const isDemoPath = (path?: string): boolean => {
+    if (!path) return false
+    return demoPrefixes.some((prefix) => path.startsWith(prefix))
+  }
+
+  const shouldRemove = (item: AppRouteRecord): boolean => {
+    // 带外链的帮助类菜单，视为演示项直接移除
+    if (item.meta?.link && item.meta?.isIframe === false) return true
+    // 路径命中演示前缀
+    if (isDemoPath(item.path)) return true
+    return false
+  }
+
+  const walk = (items: AppRouteRecord[]): AppRouteRecord[] => {
+    return items
+      .filter((item) => !shouldRemove(item))
+      .map((item) => {
+        const next: AppRouteRecord = { ...item }
+        if (Array.isArray(item.children) && item.children.length > 0) {
+          next.children = walk(item.children)
+        }
+        return next
+      })
+  }
+
+  return walk(menuList)
 }
 
 /**
@@ -325,9 +394,8 @@ function isValidMenuList(menuList: AppRouteRecord[]): boolean {
  */
 export function resetRouterState(): void {
   isRouteRegistered.value = false
-  const menuStore = useMenuStore()
-  menuStore.removeAllDynamicRoutes()
-  menuStore.setMenuList([])
+  // 仅通过内存移除已注册动态路由，不操作菜单 store
+  removeAllDynamicRoutes()
 }
 
 /**
@@ -362,5 +430,37 @@ async function fetchUserInfoIfNeeded(from: RouteLocationNormalized): Promise<voi
  * 判断是否为未授权错误（401）
  */
 function isUnauthorizedError(error: unknown): error is HttpError {
-  return isHttpError(error) && error.code === ApiStatus.unauthorized
+  return (
+    isHttpError(error) &&
+    (error.code === ApiStatus.unauthorized || error.code === ApiStatus.forbidden)
+  )
+}
+
+/**
+ * 递归去重菜单（按同级的 path/name 键去重）
+ */
+function dedupeMenus(menuList: AppRouteRecord[]): AppRouteRecord[] {
+  const dedupeLevel = (items: AppRouteRecord[]): AppRouteRecord[] => {
+    const seen = new Set<string>()
+    const unique: AppRouteRecord[] = []
+
+    items.forEach((item) => {
+      const key = [String(item.path || ''), String(item.name || ''), String(item.meta?.title || '')]
+        .filter(Boolean)
+        .join('::')
+        .toLowerCase()
+
+      if (!seen.has(key)) {
+        seen.add(key)
+        const children = item.children ? dedupeLevel(item.children) : undefined
+        unique.push({ ...item, children })
+      } else {
+        console.warn(`[菜单去重] 忽略重复菜单: ${String(item.name || item.meta?.title || '')} (${String(item.path || '')})`)
+      }
+    })
+
+    return unique
+  }
+
+  return dedupeLevel(menuList)
 }
