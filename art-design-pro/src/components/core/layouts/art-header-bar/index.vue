@@ -316,12 +316,22 @@
   }
 
   /**
-   * 刷新页面
-   * @param {number} time - 延迟时间，默认为0毫秒
+   * 刷新页面（全局）
+   * - 重置动态路由注册状态并重新导航到当前路径
+   * - 触发路由守卫重新获取菜单并注册动态路由
    */
   const reload = (time: number = 0): void => {
-    setTimeout(() => {
-      useCommon().refresh()
+    setTimeout(async () => {
+      try {
+        // 动态导入以避免潜在的循环依赖
+        const { resetRouterState } = await import('@/router/guards/beforeEach')
+        resetRouterState()
+        // 重新导航到当前路径以触发路由守卫逻辑
+        router.replace(router.currentRoute.value.fullPath)
+      } catch (error) {
+        // 兜底：若全局刷新失败，降级为模块内刷新
+        useCommon().refresh()
+      }
     }, time)
   }
 

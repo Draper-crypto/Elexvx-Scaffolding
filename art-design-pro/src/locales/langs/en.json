@@ -4,6 +4,7 @@
     "forbidden": "Access to this resource is forbidden",
     "notFound": "The requested resource does not exist",
     "methodNotAllowed": "Request method not allowed",
+    "conflict": "Request conflict, please check your input",
     "requestTimeout": "Request timeout, please try again later",
     "internalServerError": "Internal server error, please try again later",
     "badGateway": "Bad gateway error, please try again later",

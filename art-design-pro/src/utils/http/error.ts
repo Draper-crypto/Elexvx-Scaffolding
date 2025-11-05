@@ -70,6 +70,7 @@ const getErrorMessage = (status: number): string => {
     [ApiStatus.forbidden]: 'httpMsg.forbidden',
     [ApiStatus.notFound]: 'httpMsg.notFound',
     [ApiStatus.methodNotAllowed]: 'httpMsg.methodNotAllowed',
+    [ApiStatus.conflict]: 'httpMsg.conflict',
     [ApiStatus.requestTimeout]: 'httpMsg.requestTimeout',
     [ApiStatus.internalServerError]: 'httpMsg.internalServerError',
     [ApiStatus.badGateway]: 'httpMsg.badGateway',
@@ -93,7 +94,8 @@ export function handleError(error: AxiosError<ErrorResponse>): never {
   }
 
   const statusCode = error.response?.status
-  const errorMessage = error.response?.data?.msg || error.message
+  const serverMessage = error.response?.data?.msg
+  const errorMessage = serverMessage || error.message
   const requestConfig = error.config
 
   // 处理网络错误
@@ -105,9 +107,11 @@ export function handleError(error: AxiosError<ErrorResponse>): never {
   }
 
   // 处理 HTTP 状态码错误
-  const message = statusCode
-    ? getErrorMessage(statusCode)
-    : errorMessage || $t('httpMsg.requestFailed')
+  const message = serverMessage
+    ? serverMessage
+    : statusCode
+      ? getErrorMessage(statusCode)
+      : errorMessage || $t('httpMsg.requestFailed')
   throw new HttpError(message, statusCode || ApiStatus.error, {
     data: error.response.data,
     url: requestConfig?.url,

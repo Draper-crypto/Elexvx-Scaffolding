@@ -1,6 +1,8 @@
 com\jsj\artdesignserver\controller\MenuController$MenuRoute$MenuRouteBuilder.class
 com\jsj\artdesignserver\dto\LoginResponse.class
+com\jsj\artdesignserver\bootstrap\MenuInitializer$1.class
 com\jsj\artdesignserver\dto\RoleBrief$RoleBriefBuilder.class
+com\jsj\artdesignserver\dto\SystemManageUserSaveRequest.class
 com\jsj\artdesignserver\repository\SysPermissionRepository.class
 com\jsj\artdesignserver\controller\RoleController.class
 com\jsj\artdesignserver\entity\SysPermission.class
@@ -46,6 +48,7 @@ com\jsj\artdesignserver\controller\UserController.class
 com\jsj\artdesignserver\util\CaptchaUtil.class
 com\jsj\artdesignserver\dto\LoginResponse$LoginResponseBuilder.class
 com\jsj\artdesignserver\dto\SystemManageRoleItem$SystemManageRoleItemBuilder.class
+com\jsj\artdesignserver\bootstrap\MenuInitializer.class
 com\jsj\artdesignserver\entity\SysRole.class
 com\jsj\artdesignserver\entity\SysMenu$SysMenuBuilder.class
 com\jsj\artdesignserver\service\MenuService.class

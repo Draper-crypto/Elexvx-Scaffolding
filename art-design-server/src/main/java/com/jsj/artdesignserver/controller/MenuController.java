@@ -38,6 +38,92 @@ public class MenuController {
     }
 
     /**
+     * 创建菜单或权限按钮
+     */
+    @PostMapping("/menus")
+    @Transactional
+    public ResponseEntity<SysMenu> createMenu(@RequestBody SysMenu payload) {
+        SysMenu entity = SysMenu.builder()
+                .parentId(payload.getParentId())
+                .menuType(payload.getMenuType())
+                .menuName(payload.getMenuName())
+                .routePath(payload.getRoutePath())
+                .routeName(payload.getRouteName())
+                .componentPath(payload.getComponentPath())
+                .permissionHint(payload.getPermissionHint())
+                .icon(payload.getIcon())
+                .orderNum(payload.getOrderNum())
+                .externalLink(payload.getExternalLink())
+                .badgeText(payload.getBadgeText())
+                .activePath(payload.getActivePath())
+                .enabled(payload.getEnabled())
+                .cachePage(payload.getCachePage())
+                .hiddenMenu(payload.getHiddenMenu())
+                .embedded(payload.getEmbedded())
+                .showBadge(payload.getShowBadge())
+                .affix(payload.getAffix())
+                .hideTab(payload.getHideTab())
+                .fullScreen(payload.getFullScreen())
+                .build();
+
+        SysMenu saved = menuRepository.save(entity);
+        return ResponseEntity.ok(saved);
+    }
+
+    /**
+     * 更新菜单或权限按钮
+     */
+    @PutMapping("/menus/{id}")
+    @Transactional
+    public ResponseEntity<SysMenu> updateMenu(@PathVariable Long id, @RequestBody SysMenu payload) {
+        Optional<SysMenu> optional = menuRepository.findById(id);
+        if (optional.isEmpty()) {
+            return ResponseEntity.notFound().build();
+        }
+        SysMenu entity = optional.get();
+        entity.setParentId(payload.getParentId());
+        entity.setMenuType(payload.getMenuType());
+        entity.setMenuName(payload.getMenuName());
+        entity.setRoutePath(payload.getRoutePath());
+        entity.setRouteName(payload.getRouteName());
+        entity.setComponentPath(payload.getComponentPath());
+        entity.setPermissionHint(payload.getPermissionHint());
+        entity.setIcon(payload.getIcon());
+        entity.setOrderNum(payload.getOrderNum());
+        entity.setExternalLink(payload.getExternalLink());
+        entity.setBadgeText(payload.getBadgeText());
+        entity.setActivePath(payload.getActivePath());
+        entity.setEnabled(payload.getEnabled());
+        entity.setCachePage(payload.getCachePage());
+        entity.setHiddenMenu(payload.getHiddenMenu());
+        entity.setEmbedded(payload.getEmbedded());
+        entity.setShowBadge(payload.getShowBadge());
+        entity.setAffix(payload.getAffix());
+        entity.setHideTab(payload.getHideTab());
+        entity.setFullScreen(payload.getFullScreen());
+        SysMenu saved = menuRepository.save(entity);
+        return ResponseEntity.ok(saved);
+    }
+
+    /**
+     * 删除菜单或权限按钮（递归删除子节点）
+     */
+    @DeleteMapping("/menus/{id}")
+    @Transactional
+    public ResponseEntity<Void> deleteMenu(@PathVariable Long id) {
+        deleteRecursive(id);
+        return ResponseEntity.ok().build();
+    }
+
+    private void deleteRecursive(Long id) {
+        List<SysMenu> children = menuRepository.findByParentId(id);
+        for (SysMenu child : children) {
+            deleteRecursive(child.getId());
+        }
+        menuRepository.deleteById(id);
+    }
+
+    /**
      * 导入静态路由到数据库（覆盖式）
      */
     @PostMapping("/menus/import")
@@ -124,7 +210,7 @@ public class MenuController {
         // 收集按钮权限
         List<AuthItem> authList = children.stream()
                 .filter(c -> Objects.equals(c.getMenuType(), 3))
-                .map(c -> new AuthItem(c.getMenuName(), c.getPermissionHint()))
+                .map(c -> new AuthItem(c.getId(), c.getMenuName(), c.getPermissionHint()))
                 .collect(Collectors.toList());
 
         // 非按钮子菜单
@@ -199,6 +285,7 @@ public class MenuController {
     @NoArgsConstructor
     @AllArgsConstructor
     public static class AuthItem {
+        private Long id;
         private String title;
         private String authMark;
     }

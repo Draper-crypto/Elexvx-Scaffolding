@@ -45,7 +45,7 @@
   import ArtButtonTable from '@/components/core/forms/art-button-table/index.vue'
   import { ACCOUNT_TABLE_DATA } from '@/mock/temp/formData'
   import { useTable } from '@/composables/useTable'
-  import { fetchGetUserList } from '@/api/system-manage'
+  import { fetchDeleteUser, fetchGetUserList } from '@/api/system-manage'
   import UserSearch from './modules/user-search.vue'
   import UserDialog from './modules/user-dialog.vue'
   import { ElTag, ElMessageBox, ElImage } from 'element-plus'
@@ -145,7 +145,10 @@
           label: '性别',
           sortable: true,
           // checked: false, // 隐藏列
-          formatter: (row) => row.userGender
+          formatter: (row) => {
+            const map: Record<string, string> = { '0': '未知', '1': '男', '2': '女' }
+            return map[row.userGender] || '未知'
+          }
         },
         { prop: 'userPhone', label: '手机号' },
         {
@@ -233,9 +236,13 @@
       confirmButtonText: '确定',
       cancelButtonText: '取消',
       type: 'error'
-    }).then(() => {
-      ElMessage.success('注销成功')
     })
+      .then(async () => {
+        await fetchDeleteUser(row.id)
+        ElMessage.success('注销成功')
+        refreshData()
+      })
+      .catch(() => {})
   }
 
   /**
@@ -245,6 +252,8 @@
     try {
       dialogVisible.value = false
       currentUserData.value = {}
+      // 刷新列表
+      refreshData()
     } catch (error) {
       console.error('提交失败:', error)
     }

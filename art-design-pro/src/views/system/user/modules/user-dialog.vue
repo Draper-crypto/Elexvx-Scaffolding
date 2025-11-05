@@ -14,12 +14,13 @@
       </ElFormItem>
       <ElFormItem label="性别" prop="gender">
         <ElSelect v-model="formData.gender">
-          <ElOption label="男" value="男" />
-          <ElOption label="女" value="女" />
+          <ElOption label="未知" value="0" />
+          <ElOption label="男" value="1" />
+          <ElOption label="女" value="2" />
         </ElSelect>
       </ElFormItem>
-      <ElFormItem label="角色" prop="role">
-        <ElSelect v-model="formData.role" multiple>
+      <ElFormItem label="角色" prop="userRoles">
+        <ElSelect v-model="formData.userRoles" multiple placeholder="请选择角色">
           <ElOption
             v-for="role in roleList"
             :key="role.roleCode"
@@ -39,7 +40,9 @@
 </template>
 
 <script setup lang="ts">
-  import { ROLE_LIST_DATA } from '@/mock/temp/formData'
+  import { fetchCreateUser, fetchGetRoleList, fetchUpdateUser } from '@/api/system-manage'
+  import { HttpError } from '@/utils/http/error'
+  import { ApiStatus } from '@/utils/http/status'
   import type { FormInstance, FormRules } from 'element-plus'
 
   interface Props {
@@ -56,8 +59,8 @@
   const props = defineProps<Props>()
   const emit = defineEmits<Emits>()
 
-  // 角色列表数据
-  const roleList = ref(ROLE_LIST_DATA)
+  // 角色列表数据（从后端获取）
+  const roleList = ref<Api.SystemManage.RoleList['records']>([])
 
   // 对话框显示控制
   const dialogVisible = computed({
@@ -74,8 +77,8 @@
   const formData = reactive({
     username: '',
     phone: '',
-    gender: '男',
-    role: [] as string[]
+    gender: '0',
+    userRoles: [] as string[]
   })
 
   // 表单验证规则
@@ -89,7 +92,7 @@
       { pattern: /^1[3-9]\d{9}$/, message: '请输入正确的手机号格式', trigger: 'blur' }
     ],
     gender: [{ required: true, message: '请选择性别', trigger: 'blur' }],
-    role: [{ required: true, message: '请选择角色', trigger: 'blur' }]
+    userRoles: [{ required: true, message: '请选择角色', trigger: 'blur' }]
   }
 
   /**
@@ -103,8 +106,8 @@
     Object.assign(formData, {
       username: isEdit && row ? row.userName || '' : '',
       phone: isEdit && row ? row.userPhone || '' : '',
-      gender: isEdit && row ? row.userGender || '男' : '男',
-      role: isEdit && row ? (Array.isArray(row.userRoles) ? row.userRoles : []) : []
+      gender: isEdit && row ? (row.userGender || '0') : '0',
+      userRoles: isEdit && row ? (Array.isArray(row.userRoles) ? row.userRoles : []) : []
     })
   }
 
@@ -132,12 +135,50 @@
   const handleSubmit = async () => {
     if (!formRef.value) return
 
-    await formRef.value.validate((valid) => {
-      if (valid) {
+    await formRef.value.validate(async (valid) => {
+      if (!valid) return
+      const payload: Api.SystemManage.UserCreatePayload = {
+        userName: formData.username,
+        userPhone: formData.phone,
+        userGender: formData.gender as '1' | '2' | '0',
+        status: '1',
+        userRoles: formData.userRoles
+      }
+
+      try {
+        if (dialogType.value === 'add') {
+          await fetchCreateUser(payload)
+        } else {
+          const id = props.userData?.id as number
+          await fetchUpdateUser(id, payload)
+        }
         ElMessage.success(dialogType.value === 'add' ? '添加成功' : '更新成功')
         dialogVisible.value = false
         emit('submit')
+      } catch (error) {
+        if (error instanceof HttpError) {
+          // 若为手机号冲突，提示并保持弹窗打开
+          if (error.code === ApiStatus.conflict) {
+            ElMessage.error(error.message || '手机号已存在')
+            // 重新校验手机号字段以提示用户
+            nextTick(() => formRef.value?.validateField('phone'))
+            return
+          }
+          ElMessage.error(error.message)
+          return
+        }
+        ElMessage.error('提交失败，请稍后重试')
       }
     })
   }
+
+  // 获取角色列表
+  const loadRoles = async () => {
+    const res = await fetchGetRoleList({ current: 1, size: 100 })
+    roleList.value = Array.isArray(res.records) ? res.records : []
+  }
+
+  onMounted(() => {
+    loadRoles()
+  })
 </script>

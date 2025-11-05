@@ -88,6 +88,22 @@ declare namespace Api {
         Api.Common.CommonSearchParams
     >
 
+    /** 用户新增载荷 */
+    interface UserCreatePayload {
+      userName: string
+      userPhone?: string
+      userEmail?: string
+      /** '0'未知/'1'男/'2'女 */
+      userGender?: '0' | '1' | '2'
+      /** '1'启用 '2'禁用 */
+      status?: '1' | '2'
+      /** 角色编码 */
+      userRoles?: string[]
+    }
+
+    /** 用户更新载荷 */
+    type UserUpdatePayload = Partial<UserCreatePayload>
+
     /** 角色列表 */
     type RoleList = Api.Common.PaginatedResponse<RoleListItem>
 
