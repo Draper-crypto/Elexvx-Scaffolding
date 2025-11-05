@@ -47,13 +47,7 @@ export function fetchGetMenuList() {
   })
 }
 
-// 导入静态路由到数据库
-export function fetchImportMenus(routes: AppRouteRecord[]) {
-  return request.post<string>({
-    url: '/api/system/menus/import',
-    data: routes
-  })
-}
+// 已移除“导入静态路由到数据库”入口，前端仅依赖后端(MySQL)菜单数据
 
 // 新增菜单或权限按钮
 export function fetchCreateMenu(data: any) {

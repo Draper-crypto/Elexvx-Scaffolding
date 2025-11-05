@@ -6,14 +6,12 @@ import { useUserStore } from '@/store/modules/user'
 import { useMenuStore } from '@/store/modules/menu'
 import { setWorktab } from '@/utils/navigation'
 import { setPageTitle } from '../utils/utils'
-import { fetchGetMenuList, fetchImportMenus } from '@/api/system-manage'
+import { fetchGetMenuList } from '@/api/system-manage'
 import { registerDynamicRoutes } from '../utils/registerRoutes'
 import { AppRouteRecord } from '@/types/router'
 import { RoutesAlias } from '../routesAlias'
 import { menuDataToRouter } from '../utils/menuToRouter'
-import { asyncRoutes } from '../routes/asyncRoutes'
 import { staticRoutes } from '../routes/staticRoutes'
-import { routeModules } from '@/router/modules'
 import { loadingService } from '@/utils/ui'
 import { useCommon } from '@/composables/useCommon'
 import { useWorktabStore } from '@/store/modules/worktab'
@@ -23,6 +21,7 @@ import { HOME_PAGE_PATH } from '@/router'
 import { fetchGetUserInfo } from '@/api/auth'
 import { ApiStatus } from '@/utils/http/status'
 import { HttpError, isHttpError } from '@/utils/http/error'
+import { routeModules } from '../modules'
 
 // 是否已注册动态路由
 const isRouteRegistered = ref(false)
@@ -211,30 +210,8 @@ async function handleDynamicRoutes(
  * 获取菜单数据
  */
 async function getMenuData(router: Router): Promise<void> {
-  if (useCommon().isFrontendMode.value) {
-    await processFrontendMenu(router)
-  } else {
-    await processBackendMenu(router)
-  }
-}
-
-/**
- * 处理前端控制模式的菜单逻辑
- */
-async function processFrontendMenu(router: Router): Promise<void> {
-  const menuList = asyncRoutes.map((route) => menuDataToRouter(route))
-  const userStore = useUserStore()
-  const roles = userStore.info.roles
-
-  if (!roles) {
-    throw new Error('获取用户角色失败')
-  }
-
-  // 过滤演示菜单后，再根据角色过滤
-  const demoFiltered = filterDemoMenus(menuList)
-  const filteredMenuList = filterMenuByRoles(demoFiltered, roles)
-
-  await registerAndStoreMenu(router, filteredMenuList)
+  // 仅使用后端菜单数据来源
+  await processBackendMenu(router)
 }
 
 /**
@@ -245,15 +222,14 @@ async function processBackendMenu(router: Router): Promise<void> {
   try {
     list = await fetchGetMenuList()
   } catch (error) {
-    console.warn('后端菜单获取失败，使用静态路由作为回退', error)
+    console.warn('后端菜单获取失败', error)
     list = []
   }
 
-  // 后端返回为空或失败时，使用静态路由作为回退，确保开发环境侧边栏可用
+  // 当后端返回空菜单或请求失败时，回退到内置核心路由，避免进入 500 页面
   if (!Array.isArray(list) || list.length === 0) {
-    const fallbackMenuList = routeModules.map((route) => menuDataToRouter(route))
-    const filteredFallback = filterDemoMenus(fallbackMenuList)
-    await registerAndStoreMenu(router, filteredFallback)
+    console.warn('[菜单] 后端数据为空，使用内置路由作为回退')
+    await registerAndStoreMenu(router, routeModules as AppRouteRecord[])
     return
   }
 

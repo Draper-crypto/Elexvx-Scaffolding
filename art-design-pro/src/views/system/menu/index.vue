@@ -22,9 +22,6 @@
           <ElButton @click="toggleExpand" v-ripple>
             {{ isExpanded ? '收起' : '展开' }}
           </ElButton>
-          <ElButton type="primary" @click="handleImportStatic" v-ripple>
-            导入静态路由
-          </ElButton>
         </template>
       </ArtTableHeader>
 
@@ -59,13 +56,12 @@
   import MenuDialog from './modules/menu-dialog.vue'
   import {
     fetchGetMenuList,
-    fetchImportMenus,
     fetchCreateMenu,
     fetchUpdateMenu,
     fetchDeleteMenu
   } from '@/api/system-manage'
   import { ElTag, ElMessageBox, ElMessage } from 'element-plus'
-  import { routeModules } from '@/router/modules'
+  // 移除静态路由模块导入，菜单仅来源后端
 
   defineOptions({ name: 'Menus' })
 
@@ -119,13 +115,13 @@
     try {
       const list = await fetchGetMenuList()
       if (!Array.isArray(list) || list.length === 0) {
-        ElMessage.info('当前没有菜单数据，已使用静态路由作为回退')
-        tableData.value = routeModules
+        ElMessage.info('当前没有菜单数据，请先在后端添加')
+        tableData.value = []
       } else {
         tableData.value = list
       }
     } catch (error: any) {
-      // 友好处理菜单加载异常，保留页面并使用静态路由回退
+      // 友好处理菜单加载异常，提示用户并保持空列表
       try {
         // 尝试使用统一错误展示
         const { isHttpError, showError } = await import('@/utils/http/error')
@@ -133,18 +129,18 @@
         if (isHttpError(error)) {
           showError(error)
           if (error.status === ApiStatus.unauthorized || error.status === ApiStatus.forbidden) {
-            ElMessage.warning('无权限加载菜单，已使用静态路由作为回退')
+            ElMessage.warning('无权限加载菜单')
           } else {
-            ElMessage.error('菜单加载失败，已使用静态路由作为回退')
+            ElMessage.error('菜单加载失败')
           }
         } else {
-          ElMessage.error('菜单加载失败，已使用静态路由作为回退')
+          ElMessage.error('菜单加载失败')
         }
       } catch (_) {
         // 回退兜底：不依赖按需导入也能提示
-        ElMessage.error('菜单加载失败，已使用静态路由作为回退')
+        ElMessage.error('菜单加载失败')
       }
-      tableData.value = routeModules
+      tableData.value = []
     } finally {
       loading.value = false
     }
@@ -307,26 +303,7 @@
     }
   }
 
-  /**
-   * 导入前端静态路由到数据库
-   */
-  const handleImportStatic = async (): Promise<void> => {
-    try {
-      await ElMessageBox.confirm('将清空并覆盖数据库中的菜单，确定继续？', '导入静态路由', {
-        confirmButtonText: '确定',
-        cancelButtonText: '取消',
-        type: 'warning'
-      })
-      await fetchImportMenus(routeModules)
-      ElMessage.success('导入成功')
-      getMenuList()
-      await refreshGlobalRoutes()
-    } catch (error) {
-      if (error !== 'cancel') {
-        ElMessage.error('导入失败')
-      }
-    }
-  }
+  // 已移除静态路由导入功能，确保菜单仅来源后端(MySQL)
 
   /**
    * 深度克隆对象

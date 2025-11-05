@@ -1,0 +1,26 @@
+spring:
+  application:
+    name: art-design-server
+  datasource:
+    # 使用文件型 H2，避免重启后数据丢失（相对项目根目录存放于 .h2db/art.mv.db）
+    url: jdbc:h2:file:./.h2db/art;MODE=MySQL;DATABASE_TO_UPPER=false;AUTO_SERVER=TRUE;DB_CLOSE_DELAY=-1
+    driver-class-name: org.h2.Driver
+    username: sa
+    password: ""
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+  h2:
+    console:
+      enabled: true
+
+server:
+  port: 8080
+
+jwt:
+  secret: "change-me-to-a-strong-secret-32-bytes-minimum"
+  expiration-seconds: 86400

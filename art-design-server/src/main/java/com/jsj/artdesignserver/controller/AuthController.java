@@ -42,11 +42,15 @@ public class AuthController {
     @GetMapping("/me")
     public ResponseEntity<UserDto> me() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        if (authentication == null || authentication.getPrincipal() == null) {
+        if (authentication == null || !authentication.isAuthenticated()) {
             return ResponseEntity.status(401).build();
         }
-        Long userId = (Long) authentication.getPrincipal();
+        Object principal = authentication.getPrincipal();
+        if (!(principal instanceof Long)) {
+            // 匿名用户或非预期的 principal 类型，一律视为未认证
+            return ResponseEntity.status(401).build();
+        }
+        Long userId = (Long) principal;
         return ResponseEntity.ok(authService.currentUser(userId));
     }
 }
-
