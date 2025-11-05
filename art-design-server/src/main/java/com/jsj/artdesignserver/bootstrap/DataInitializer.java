@@ -10,13 +10,17 @@ import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.support.TransactionTemplate;
 
 @Configuration
 @org.springframework.transaction.annotation.Transactional
 public class DataInitializer {
     @Bean
-    CommandLineRunner initData(SysUserRepository userRepo, SysRoleRepository roleRepo, SysPermissionRepository permRepo, PasswordEncoder encoder) {
+    CommandLineRunner initData(SysUserRepository userRepo, SysRoleRepository roleRepo, SysPermissionRepository permRepo, PasswordEncoder encoder, PlatformTransactionManager txManager) {
         return args -> {
+            TransactionTemplate tx = new TransactionTemplate(txManager);
+            tx.execute(status -> {
             // 初始化基础权限
             SysPermission addPerm = permRepo.findByPermCode("sys:menu:add").orElseGet(() ->
                     permRepo.save(SysPermission.builder().permCode("sys:menu:add").permName("新增").permType(2).effect(1).build()));
@@ -53,6 +57,8 @@ public class DataInitializer {
             admin.getRoles().add(superRole);
             admin.getRoles().add(adminRole);
             userRepo.save(admin);
+                return null;
+            });
         };
     }
 }

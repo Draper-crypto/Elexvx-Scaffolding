@@ -57,7 +57,7 @@ public class SysUser {
     @Column(nullable = false)
     private Integer presenceStatus = 0;
 
-    @Column(nullable = false)
+    @Column(nullable = true, columnDefinition = "datetime(6) default CURRENT_TIMESTAMP(6)")
     private LocalDateTime createdAt = LocalDateTime.now();
 
     @PrePersist

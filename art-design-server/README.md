@@ -5,7 +5,7 @@
 ## 快速开始
 
 1. 安装 JDK 17 与 Maven（可选）。
-2. 开发模式默认使用内存数据库 H2，直接运行即可。
+2. 开发模式使用 MySQL 数据库，需确保本地或远程 MySQL 可用。
 3. 运行：
 
 ```bash
@@ -21,10 +21,11 @@ java -jar target/art-design-server-0.0.1-SNAPSHOT.jar
 
 ## 数据库配置
 
-默认使用 H2（`application.yml`）。若要使用 MySQL：
+默认使用 MySQL（`application.yml` 与 `application-dev.yml`）。
 
-- 在 `src/main/resources/application.yml` 中替换为 MySQL 连接信息（已给出示例），并将 `ddl-auto` 设为 `none`。
-- 在数据库中执行 `src/main/resources/schema-mysql.sql` 建表。
+- 连接信息示例：`jdbc:mysql://127.0.0.1:3306/art?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC&characterEncoding=utf8&createDatabaseIfNotExist=true`
+- 可通过环境变量覆盖：`DB_USERNAME`（默认 `root`）、`DB_PASSWORD`（默认空）。
+- JPA `ddl-auto` 目前为 `update`，也可改为 `none` 并执行 `src/main/resources/schema-mysql.sql` 初始化结构。
 
 ## 已实现接口
 
@@ -44,4 +45,3 @@ java -jar target/art-design-server-0.0.1-SNAPSHOT.jar
 
 - 个人资料模块（profile）与后台管理模块（用户、角色、菜单、权限）接口实现。
 - 导入导出、角色菜单/权限分配、菜单树查询等。
-

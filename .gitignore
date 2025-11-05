@@ -48,12 +48,7 @@ art-design-pro/.auto-import.json
 # ------------------------------
 **/target/
 
-# H2 database (file-based) — keep local only
-art-design-server/.h2db/
-art-design-server/**/*.mv.db
-art-design-server/**/*.trace.db
-art-design-server/**/*.lock.db
+# Database runtime logs
 
 # Local runtime logs
 art-design-server/app-mysql.log
-
