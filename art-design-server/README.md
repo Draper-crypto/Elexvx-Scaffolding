@@ -5,10 +5,29 @@
 ## 快速开始
 
 1. 安装 JDK 17 与 Maven（可选）。
-2. 开发模式使用 MySQL 数据库，需确保本地或远程 MySQL 可用。
+2. 仅支持 MySQL 数据库，需确保本地或远程 MySQL 可用并具备初始化数据（可执行 `datebase/db_art_schema_seed.sql`）。
 3. 运行：
 
 ```bash
+mvn spring-boot:run
+```
+
+4. 可通过环境变量修改连接信息或激活 `dev` profile：
+
+```bash
+SPRING_DATASOURCE_URL="jdbc:mysql://127.0.0.1:3306/art?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC&characterEncoding=utf8&createDatabaseIfNotExist=true" \
+SPRING_DATASOURCE_USERNAME=root \
+SPRING_DATASOURCE_PASSWORD=你的密码 \
+mvn spring-boot:run
+```
+
+或：
+
+```bash
+SPRING_PROFILES_ACTIVE=dev \
+DEV_DB_URL="jdbc:mysql://127.0.0.1:3306/art?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC&characterEncoding=utf8&createDatabaseIfNotExist=true" \
+DEV_DB_USERNAME=root \
+DEV_DB_PASSWORD=你的密码 \
 mvn spring-boot:run
 ```
 
@@ -24,8 +43,8 @@ java -jar target/art-design-server-0.0.1-SNAPSHOT.jar
 默认使用 MySQL（`application.yml` 与 `application-dev.yml`）。
 
 - 连接信息示例：`jdbc:mysql://127.0.0.1:3306/art?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC&characterEncoding=utf8&createDatabaseIfNotExist=true`
-- 可通过环境变量覆盖：`DB_USERNAME`（默认 `root`）、`DB_PASSWORD`（默认空）。
-- JPA `ddl-auto` 目前为 `update`，也可改为 `none` 并执行 `src/main/resources/schema-mysql.sql` 初始化结构。
+- 可通过环境变量覆盖：`SPRING_DATASOURCE_URL`、`SPRING_DATASOURCE_USERNAME`、`SPRING_DATASOURCE_PASSWORD` 等（`dev` profile 使用 `DEV_` 前缀）。
+- JPA `ddl-auto` 默认 `update`，也可通过环境变量调整或改为 `none` 并执行 `datebase/db_art_schema_seed.sql` 初始化结构。
 
 ## 已实现接口
 

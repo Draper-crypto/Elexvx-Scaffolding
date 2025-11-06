@@ -1,23 +1,19 @@
 spring:
-  application:
-    name: art-design-server
+  config:
+    activate:
+      on-profile: dev
   datasource:
-    url: jdbc:mysql://127.0.0.1:3306/art?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC&characterEncoding=utf8&createDatabaseIfNotExist=true
+    url: ${DEV_DB_URL:jdbc:mysql://127.0.0.1:3306/art?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC&characterEncoding=utf8&createDatabaseIfNotExist=true}
     driver-class-name: com.mysql.cj.jdbc.Driver
-    username: root
-    password: "151505"
+    username: ${DEV_DB_USERNAME:root}
+    password: ${DEV_DB_PASSWORD:}
   jpa:
     hibernate:
-      ddl-auto: update
-    show-sql: true
+      ddl-auto: ${DEV_JPA_DDL_AUTO:update}
     properties:
       hibernate:
-        format_sql: true
         dialect: org.hibernate.dialect.MySQLDialect
-
-server:
-  port: 8080
-
-jwt:
-  secret: "change-me-to-a-strong-secret-32-bytes-minimum"
-  expiration-seconds: 86400
+logging:
+  level:
+    com.zaxxer.hikari: DEBUG
+    com.mysql.cj: DEBUG
