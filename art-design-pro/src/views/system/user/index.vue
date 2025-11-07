@@ -45,7 +45,7 @@
   import ArtButtonTable from '@/components/core/forms/art-button-table/index.vue'
   import { ACCOUNT_TABLE_DATA } from '@/mock/temp/formData'
   import { useTable } from '@/composables/useTable'
-  import { fetchGetUserList, deleteUser as apiDeleteUser } from '@/api/system-manage'
+  import { fetchGetUserList } from '@/api/system-manage'
   import UserSearch from './modules/user-search.vue'
   import UserDialog from './modules/user-dialog.vue'
   import { ElTag, ElMessageBox, ElImage } from 'element-plus'
@@ -145,7 +145,7 @@
           label: '性别',
           sortable: true,
           // checked: false, // 隐藏列
-          formatter: (row) => row.userGender || '未知'
+          formatter: (row) => row.userGender
         },
         { prop: 'userPhone', label: '手机号' },
         {
@@ -191,25 +191,10 @@
         }
 
         // 使用本地头像替换接口返回的头像
-        return records.map((item: any, index: number) => {
-          const roleCodes = Array.isArray(item.roles)
-            ? item.roles.map((r: any) => r.roleCode).filter(Boolean)
-            : []
-
+        return records.map((item, index: number) => {
           return {
-            id: item.id,
-            avatar: ACCOUNT_TABLE_DATA[index % ACCOUNT_TABLE_DATA.length].avatar,
-            status: String(item.status ?? '1'),
-            userName: item.username ?? '',
-            userGender: item.gender === 1 ? '男' : item.gender === 2 ? '女' : '未知',
-            nickName: item.nickname ?? '',
-            userPhone: item.phone ?? '',
-            userEmail: item.email ?? '',
-            userRoles: roleCodes,
-            createBy: '',
-            createTime: item.createdAt ? String(item.createdAt).replace('T', ' ') : '',
-            updateBy: '',
-            updateTime: ''
+            ...item,
+            avatar: ACCOUNT_TABLE_DATA[index % ACCOUNT_TABLE_DATA.length].avatar
           }
         })
       }
@@ -249,12 +234,7 @@
       cancelButtonText: '取消',
       type: 'error'
     }).then(() => {
-      apiDeleteUser(row.id)
-        .then(() => {
-          ElMessage.success('注销成功')
-          refreshData()
-        })
-        .catch(() => {})
+      ElMessage.success('注销成功')
     })
   }
 
@@ -265,8 +245,6 @@
     try {
       dialogVisible.value = false
       currentUserData.value = {}
-      // 新增或编辑成功后刷新列表
-      refreshData()
     } catch (error) {
       console.error('提交失败:', error)
     }
