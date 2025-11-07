@@ -232,9 +232,19 @@ async function processFrontendMenu(router: Router): Promise<void> {
  * 处理后端控制模式的菜单逻辑
  */
 async function processBackendMenu(router: Router): Promise<void> {
-  const list = await fetchGetMenuList()
-  const menuList = list.map((route) => menuDataToRouter(route))
-  await registerAndStoreMenu(router, menuList)
+  try {
+    const list = await fetchGetMenuList()
+    let menuList = list.map((route) => menuDataToRouter(route))
+    // 后端为空时，回退到前端静态菜单
+    if (!isValidMenuList(menuList)) {
+      menuList = asyncRoutes.map((route) => menuDataToRouter(route))
+    }
+    await registerAndStoreMenu(router, menuList)
+  } catch (e) {
+    // 接口失败时回退到前端静态菜单
+    const menuList = asyncRoutes.map((route) => menuDataToRouter(route))
+    await registerAndStoreMenu(router, menuList)
+  }
 }
 
 /**

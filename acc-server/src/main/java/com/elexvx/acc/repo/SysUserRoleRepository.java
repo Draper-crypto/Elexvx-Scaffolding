@@ -1,0 +1,14 @@
+package com.elexvx.acc.repo;
+
+import com.elexvx.acc.entity.SysUserRole;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.stereotype.Repository;
+
+import java.util.List;
+
+@Repository
+public interface SysUserRoleRepository extends JpaRepository<SysUserRole, Long> {
+  List<SysUserRole> findByUserId(Long userId);
+  void deleteByUserId(Long userId);
+  boolean existsByUserIdAndRoleId(Long userId, Long roleId);
+}

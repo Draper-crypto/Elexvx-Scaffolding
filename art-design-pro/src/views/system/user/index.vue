@@ -45,7 +45,7 @@
   import ArtButtonTable from '@/components/core/forms/art-button-table/index.vue'
   import { ACCOUNT_TABLE_DATA } from '@/mock/temp/formData'
   import { useTable } from '@/composables/useTable'
-  import { fetchGetUserList } from '@/api/system-manage'
+  import { fetchGetUserList, fetchCreateUser, fetchUpdateUser, fetchDeleteUser, fetchSetUserRoles } from '@/api/system-manage'
   import UserSearch from './modules/user-search.vue'
   import UserDialog from './modules/user-dialog.vue'
   import { ElTag, ElMessageBox, ElImage } from 'element-plus'
@@ -145,7 +145,7 @@
           label: '性别',
           sortable: true,
           // checked: false, // 隐藏列
-          formatter: (row) => row.userGender
+          formatter: (row) => (row.userGender === '1' ? '男' : row.userGender === '2' ? '女' : '未知')
         },
         { prop: 'userPhone', label: '手机号' },
         {
@@ -228,23 +228,39 @@
    * 删除用户
    */
   const deleteUser = (row: UserListItem): void => {
-    console.log('删除用户:', row)
     ElMessageBox.confirm(`确定要注销该用户吗？`, '注销用户', {
       confirmButtonText: '确定',
       cancelButtonText: '取消',
       type: 'error'
-    }).then(() => {
-      ElMessage.success('注销成功')
     })
+      .then(async () => {
+        await fetchDeleteUser(row.id)
+        ElMessage.success('注销成功')
+        refreshData()
+      })
+      .catch(() => {})
   }
 
   /**
    * 处理弹窗提交事件
    */
-  const handleDialogSubmit = async () => {
+  const handleDialogSubmit = async (payload: any) => {
     try {
+      if (dialogType.value === 'add') {
+        const data = { ...payload, password: '123456' }
+        await fetchCreateUser(data)
+        ElMessage.success('添加成功')
+      } else {
+        const id = currentUserData.value.id!
+        await fetchUpdateUser(id, payload)
+        if (Array.isArray(payload.roleIds)) {
+          await fetchSetUserRoles(id, payload.roleIds)
+        }
+        ElMessage.success('更新成功')
+      }
       dialogVisible.value = false
       currentUserData.value = {}
+      refreshData()
     } catch (error) {
       console.error('提交失败:', error)
     }

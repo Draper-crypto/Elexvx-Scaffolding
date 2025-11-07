@@ -21,7 +21,7 @@
             style="margin-top: 25px"
           >
             <ElFormItem prop="account">
-              <ElSelect v-model="formData.account" @change="setupAccount" class="account-select">
+              <ElSelect v-model="formData.account" class="account-select" placeholder="请选择角色" clearable>
                 <ElOption
                   v-for="account in accounts"
                   :key="account.key"
@@ -169,23 +169,16 @@
   })
 
   const rules = computed<FormRules>(() => ({
+    account: [{ required: true, message: t('login.placeholder.selectRole'), trigger: 'change' }],
     username: [{ required: true, message: t('login.placeholder.username'), trigger: 'blur' }],
     password: [{ required: true, message: t('login.placeholder.password'), trigger: 'blur' }]
   }))
 
   const loading = ref(false)
 
-  onMounted(() => {
-    setupAccount('super')
-  })
+  // 默认不填充任何账号信息，保持用户名与密码为空
 
-  // 设置账号
-  const setupAccount = (key: AccountKey) => {
-    const selectedAccount = accounts.value.find((account: Account) => account.key === key)
-    formData.account = key
-    formData.username = selectedAccount?.userName ?? ''
-    formData.password = selectedAccount?.password ?? ''
-  }
+  // 选择账号角色不再自动填充用户名与密码，保留用户手动输入
 
   // 登录
   const handleSubmit = async () => {
@@ -205,7 +198,12 @@
       loading.value = true
 
       // 登录请求
-      const { username, password } = formData
+      const { account, username, password } = formData
+
+      // 登录类型校验：必须选择类型
+      if (!account) {
+        throw new Error(t('login.placeholder.selectRole'))
+      }
 
       const { token, refreshToken } = await fetchLogin({
         userName: username,
@@ -222,6 +220,14 @@
       const userInfo = await fetchGetUserInfo()
       userStore.setUserInfo(userInfo)
       userStore.setLoginStatus(true)
+
+      // 登录类型与角色校验：不一致则报错并登出
+      const roleMap: Record<string, string> = { super: 'R_SUPER', admin: 'R_ADMIN', user: 'R_USER' }
+      const expected = roleMap[account as string]
+      if (expected && userInfo.roles && !userInfo.roles.includes(expected)) {
+        userStore.logOut()
+        throw new Error(t('httpMsg.forbidden') || '登录类型与账号权限不一致')
+      }
 
       // 登录成功处理
       showLoginSuccessNotice()

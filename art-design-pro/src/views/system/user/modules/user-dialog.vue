@@ -14,20 +14,21 @@
       </ElFormItem>
       <ElFormItem label="性别" prop="gender">
         <ElSelect v-model="formData.gender">
+          <ElOption label="未知" value="未知" />
           <ElOption label="男" value="男" />
           <ElOption label="女" value="女" />
         </ElSelect>
       </ElFormItem>
-      <ElFormItem label="角色" prop="role">
-        <ElSelect v-model="formData.role" multiple>
-          <ElOption
-            v-for="role in roleList"
-            :key="role.roleCode"
-            :value="role.roleCode"
-            :label="role.roleName"
-          />
-        </ElSelect>
-      </ElFormItem>
+<ElFormItem label="角色" prop="roleIds">
+  <ElSelect v-model="formData.roleIds" multiple>
+    <ElOption
+      v-for="role in roleList"
+      :key="role.id"
+      :value="role.id"
+      :label="role.roleName"
+    />
+  </ElSelect>
+</ElFormItem>
     </ElForm>
     <template #footer>
       <div class="dialog-footer">
@@ -39,7 +40,7 @@
 </template>
 
 <script setup lang="ts">
-  import { ROLE_LIST_DATA } from '@/mock/temp/formData'
+  import { fetchGetRoleList } from '@/api/system-manage'
   import type { FormInstance, FormRules } from 'element-plus'
 
   interface Props {
@@ -50,14 +51,14 @@
 
   interface Emits {
     (e: 'update:visible', value: boolean): void
-    (e: 'submit'): void
+    (e: 'submit', payload: any): void
   }
 
   const props = defineProps<Props>()
   const emit = defineEmits<Emits>()
 
-  // 角色列表数据
-  const roleList = ref(ROLE_LIST_DATA)
+  // 角色列表数据（从后端加载）
+  const roleList = ref<any[]>([])
 
   // 对话框显示控制
   const dialogVisible = computed({
@@ -74,8 +75,8 @@
   const formData = reactive({
     username: '',
     phone: '',
-    gender: '男',
-    role: [] as string[]
+    gender: '未知',
+    roleIds: [] as number[]
   })
 
   // 表单验证规则
@@ -89,7 +90,7 @@
       { pattern: /^1[3-9]\d{9}$/, message: '请输入正确的手机号格式', trigger: 'blur' }
     ],
     gender: [{ required: true, message: '请选择性别', trigger: 'blur' }],
-    role: [{ required: true, message: '请选择角色', trigger: 'blur' }]
+    roleIds: [{ required: true, message: '请选择角色', trigger: 'blur' }]
   }
 
   /**
@@ -103,9 +104,15 @@
     Object.assign(formData, {
       username: isEdit && row ? row.userName || '' : '',
       phone: isEdit && row ? row.userPhone || '' : '',
-      gender: isEdit && row ? row.userGender || '男' : '男',
-      role: isEdit && row ? (Array.isArray(row.userRoles) ? row.userRoles : []) : []
+      gender: isEdit && row ? (row.userGender === '1' ? '男' : row.userGender === '2' ? '女' : '未知') : '未知',
+      roleIds: [] as number[]
     })
+    // 根据后端角色列表将用户的 roleCode 转换为 roleId
+    if (isEdit && row && Array.isArray(row.userRoles) && roleList.value.length) {
+      formData.roleIds = row.userRoles
+        .map((code: string) => roleList.value.find((r: any) => r.roleCode === code)?.id)
+        .filter((id: any) => typeof id === 'number') as number[]
+    }
   }
 
   /**
@@ -124,6 +131,16 @@
     },
     { immediate: true }
   )
+  
+  // 加载角色列表
+  onMounted(async () => {
+    try {
+      const res: any = await fetchGetRoleList({ current: 1, size: 100 })
+      roleList.value = Array.isArray(res.records) ? res.records : []
+    } catch (e) {
+      console.error('[UserDialog] 加载角色失败', e)
+    }
+  })
 
   /**
    * 提交表单
@@ -134,9 +151,16 @@
 
     await formRef.value.validate((valid) => {
       if (valid) {
+        const genderVal = formData.gender === '男' ? 1 : formData.gender === '女' ? 2 : 0
+        const payload = {
+          username: formData.username,
+          phone: formData.phone,
+          gender: genderVal,
+          roleIds: Array.from(new Set(formData.roleIds))
+        }
         ElMessage.success(dialogType.value === 'add' ? '添加成功' : '更新成功')
         dialogVisible.value = false
-        emit('submit')
+        emit('submit', payload)
       }
     })
   }
