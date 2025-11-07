@@ -56,55 +56,6 @@ export const systemRoutes: AppRouteRecord = {
         ]
       }
     },
-    {
-      path: 'nested',
-      name: 'Nested',
-      component: '',
-      meta: {
-        title: 'menus.system.nested',
-        keepAlive: true
-      },
-      children: [
-        
-        {
-          path: 'menu2',
-          name: 'NestedMenu2',
-          component: '',
-          meta: {
-            title: 'menus.system.menu2',
-            icon: '&#xe676;',
-            keepAlive: true
-          },
-          children: [
-            
-          ]
-        },
-        {
-          path: 'menu3',
-          name: 'NestedMenu3',
-          component: '',
-          meta: {
-            title: 'menus.system.menu3',
-            icon: '&#xe676;',
-            keepAlive: true
-          },
-          children: [
-            {
-              path: 'menu3-2',
-              name: 'NestedMenu3-2',
-              component: '',
-              meta: {
-                title: 'menus.system.menu32',
-                icon: '&#xe676;',
-                keepAlive: true
-              },
-              children: [
-                
-              ]
-            }
-          ]
-        }
-      ]
-    }
+    
   ]
 }
