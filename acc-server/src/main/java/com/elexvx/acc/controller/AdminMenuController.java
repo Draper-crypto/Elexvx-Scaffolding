@@ -41,4 +41,12 @@ public class AdminMenuController {
   @PutMapping("/{id}/permissions")
   @SaCheckPermission("sys:menu:bindperms")
   public ResponseEntity<Void> bindPermissions(@PathVariable Long id, @RequestBody BindMenuPermissionsRequest req) { menuService.bindPermissions(id, req); return ResponseEntity.noContent().build(); }
+
+  // 初始化演示菜单：仅当数据库为空时插入基础菜单
+  @PostMapping("/init-demo")
+  @SaCheckPermission("sys:menu:create")
+  public ResponseEntity<ApiResponse<Object>> initDemoMenus() {
+    menuService.seedDemoMenusIfEmpty();
+    return ResponseEntity.ok(ApiResponse.success(null));
+  }
 }

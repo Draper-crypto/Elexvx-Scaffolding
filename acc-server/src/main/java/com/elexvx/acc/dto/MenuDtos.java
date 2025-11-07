@@ -26,6 +26,7 @@ public class MenuDtos {
     public Boolean affix;
     public Boolean hideTab;
     public Boolean fullScreen;
+    public List<MenuAuth> authList = new ArrayList<>();
     public List<MenuTree> children = new ArrayList<>();
   }
 
@@ -56,5 +57,8 @@ public class MenuDtos {
 
   public static class MenuUpdateRequest extends MenuCreateRequest {}
   public static class BindMenuPermissionsRequest { public List<Long> permissionIds; }
+  public static class MenuAuth {
+    public String authMark; // 对应权限编码 perm_code
+    public String title;    // 权限名称 perm_name
+  }
 }
-

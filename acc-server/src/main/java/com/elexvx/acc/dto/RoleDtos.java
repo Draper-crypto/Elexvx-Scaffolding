@@ -9,6 +9,7 @@ public class RoleDtos {
     public String roleCode;
     public String description;
     public Integer status;
+    public java.time.LocalDateTime createdAt;
   }
 
   public static class RoleDetail extends RoleItem {}
@@ -25,4 +26,3 @@ public class RoleDtos {
   public static class AssignRoleMenusRequest { public List<Long> menuIds; }
   public static class AssignRolePermissionsRequest { public List<Long> permissionIds; }
 }
-

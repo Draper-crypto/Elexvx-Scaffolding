@@ -35,6 +35,7 @@ public class RoleService {
           i.roleCode = r.getRoleCode();
           i.description = r.getDescription();
           i.status = r.getStatus();
+          i.createdAt = r.getCreatedAt();
           return i;
         });
   }
@@ -47,6 +48,7 @@ public class RoleService {
     d.roleCode = r.getRoleCode();
     d.description = r.getDescription();
     d.status = r.getStatus();
+    d.createdAt = r.getCreatedAt();
     return d;
   }
 

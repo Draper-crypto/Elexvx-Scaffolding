@@ -61,6 +61,17 @@ export function fetchGetRoleList(params: Api.SystemManage.RoleSearchParams) {
   return request.get<any>({
     url: '/api/admin/roles',
     params: q
+  }).then((res) => {
+    const records = Array.isArray(res.records) ? res.records : []
+    const mapped = records.map((r: any) => ({
+      roleId: Number(r.id),
+      roleName: String(r.roleName || ''),
+      roleCode: String(r.roleCode || ''),
+      description: String(r.description || ''),
+      enabled: Number(r.status) === 1,
+      createTime: r.createdAt ? String(r.createdAt) : ''
+    }))
+    return { records: mapped, current: res.current, size: res.size, total: res.total } as Api.SystemManage.RoleList
   })
 }
 
@@ -95,7 +106,10 @@ function transformNode(node: any): AppRouteRecord {
       isFullPage: !!node.fullScreen,
       isIframe: !!node.embedded,
       showBadge: !!node.showBadge,
-      activePath: node.activePath || ''
+      activePath: node.activePath || '',
+      authList: Array.isArray(node.authList)
+        ? node.authList.map((a: any) => ({ authMark: String(a.authMark || ''), title: String(a.title || '') }))
+        : []
     },
     children: Array.isArray(node.children)
       ? node.children.map((child: any) => transformNode(child))

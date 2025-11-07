@@ -3,8 +3,10 @@ package com.elexvx.acc.service;
 import com.elexvx.acc.dto.MenuDtos.*;
 import com.elexvx.acc.entity.SysMenu;
 import com.elexvx.acc.entity.SysMenuPermission;
+import com.elexvx.acc.entity.SysPermission;
 import com.elexvx.acc.repo.SysMenuPermissionRepository;
 import com.elexvx.acc.repo.SysMenuRepository;
+import com.elexvx.acc.repo.SysPermissionRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -15,10 +17,12 @@ import java.util.List;
 public class MenuService {
   private final SysMenuRepository menuRepo;
   private final SysMenuPermissionRepository menuPermRepo;
+  private final SysPermissionRepository permRepo;
 
-  public MenuService(SysMenuRepository menuRepo, SysMenuPermissionRepository menuPermRepo) {
+  public MenuService(SysMenuRepository menuRepo, SysMenuPermissionRepository menuPermRepo, SysPermissionRepository permRepo) {
     this.menuRepo = menuRepo;
     this.menuPermRepo = menuPermRepo;
+    this.permRepo = permRepo;
   }
 
   public List<MenuTree> tree() {
@@ -99,6 +103,14 @@ public class MenuService {
     t.affix = toBool(m.getAffix());
     t.hideTab = toBool(m.getHideTab());
     t.fullScreen = toBool(m.getFullScreen());
+    // 绑定的权限列表
+    for (SysMenuPermission mp : menuPermRepo.findByMenuId(m.getId())) {
+      MenuAuth a = new MenuAuth();
+      java.util.Optional<SysPermission> p = permRepo.findById(mp.getPermissionId());
+      a.authMark = p.map(pp -> pp.getPermCode()).orElse(String.valueOf(mp.getPermissionId()));
+      a.title = p.map(pp -> pp.getPermName()).orElse(a.authMark);
+      t.authList.add(a);
+    }
     return t;
   }
 
@@ -165,4 +177,44 @@ public class MenuService {
 
   private Boolean toBool(Integer v) { return v != null && v != 0; }
   private Integer fromBool(Boolean v) { return v != null && v ? 1 : 0; }
+
+  // 演示菜单种子（仅当数据库为空时插入）
+  @Transactional
+  public void seedDemoMenusIfEmpty() {
+    if (menuRepo.count() > 0) return;
+    java.time.LocalDateTime now = java.time.LocalDateTime.now();
+    SysMenu dashboard = new SysMenu();
+    dashboard.setMenuType(1); dashboard.setMenuName("仪表盘"); dashboard.setRoutePath("/dashboard");
+    dashboard.setOrderNum(1); dashboard.setEnabled(1); dashboard.setCreatedAt(now); dashboard.setUpdatedAt(now);
+    menuRepo.save(dashboard);
+
+    SysMenu console = new SysMenu();
+    console.setParentId(dashboard.getId()); console.setMenuType(2); console.setMenuName("控制台");
+    console.setRoutePath("/dashboard/console"); console.setComponentPath("/dashboard/console");
+    console.setOrderNum(1); console.setEnabled(1); console.setCreatedAt(now); console.setUpdatedAt(now);
+    menuRepo.save(console);
+
+    SysMenu system = new SysMenu();
+    system.setMenuType(1); system.setMenuName("系统设置"); system.setRoutePath("/system");
+    system.setOrderNum(2); system.setEnabled(1); system.setCreatedAt(now); system.setUpdatedAt(now);
+    menuRepo.save(system);
+
+    SysMenu user = new SysMenu();
+    user.setParentId(system.getId()); user.setMenuType(2); user.setMenuName("用户管理");
+    user.setRoutePath("/system/user"); user.setComponentPath("/system/user");
+    user.setOrderNum(1); user.setEnabled(1); user.setCreatedAt(now); user.setUpdatedAt(now);
+    menuRepo.save(user);
+
+    SysMenu role = new SysMenu();
+    role.setParentId(system.getId()); role.setMenuType(2); role.setMenuName("角色管理");
+    role.setRoutePath("/system/role"); role.setComponentPath("/system/role");
+    role.setOrderNum(2); role.setEnabled(1); role.setCreatedAt(now); role.setUpdatedAt(now);
+    menuRepo.save(role);
+
+    SysMenu menu = new SysMenu();
+    menu.setParentId(system.getId()); menu.setMenuType(2); menu.setMenuName("菜单管理");
+    menu.setRoutePath("/system/menu"); menu.setComponentPath("/system/menu");
+    menu.setOrderNum(3); menu.setEnabled(1); menu.setCreatedAt(now); menu.setUpdatedAt(now);
+    menuRepo.save(menu);
+  }
 }
