@@ -181,10 +181,8 @@
 
   // 设置账号
   const setupAccount = (key: AccountKey) => {
-    const selectedAccount = accounts.value.find((account: Account) => account.key === key)
+    // 仅切换角色选择，不自动填充用户名或密码
     formData.account = key
-    formData.username = selectedAccount?.userName ?? ''
-    formData.password = selectedAccount?.password ?? ''
   }
 
   // 登录

@@ -19,24 +19,6 @@ export const dashboardRoutes: AppRouteRecord = {
         keepAlive: false,
         fixedTab: true
       }
-    },
-    {
-      path: 'analysis',
-      name: 'Analysis',
-      component: '/dashboard/analysis',
-      meta: {
-        title: 'menus.dashboard.analysis',
-        keepAlive: false
-      }
-    },
-    {
-      path: 'ecommerce',
-      name: 'Ecommerce',
-      component: '/dashboard/ecommerce',
-      meta: {
-        title: 'menus.dashboard.ecommerce',
-        keepAlive: false
-      }
     }
   ]
 }

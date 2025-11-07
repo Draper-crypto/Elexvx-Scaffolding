@@ -57,9 +57,31 @@
 </template>
 
 <script setup lang="ts">
-  import { upgradeLogList } from '@/mock/upgrade/changeLog'
+  import { onMounted, ref } from 'vue'
+  import { fetchChangelogList } from '@/api/system-manage'
 
   defineOptions({ name: 'ChangeLog' })
+
+  interface UpgradeLog {
+    version: string
+    title: string
+    date: string
+    detail?: string[]
+    requireReLogin?: boolean
+    remark?: string
+  }
+
+  const upgradeLogList = ref<UpgradeLog[]>([])
+
+  onMounted(async () => {
+    try {
+      const list = await fetchChangelogList()
+      upgradeLogList.value = Array.isArray(list) ? list : []
+    } catch (error) {
+      // 失败无阻塞展示，保持空列表即可
+      upgradeLogList.value = []
+    }
+  })
 </script>
 
 <style lang="scss" scoped>

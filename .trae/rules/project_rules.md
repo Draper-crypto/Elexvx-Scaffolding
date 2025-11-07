@@ -5,6 +5,7 @@
 - 项目使用 Spring Boot 编写后端代码, 后端代码需要符合 RESTful 风格。
 - 与账号相关的所有功能需要使用 sa-token 框架进行权限验证
 - 项目使用 MySQL 数据库, 数据库表需要符合命名规范。
+- 需要前后端分离。
 
 ## 数据库连接
 - 项目使用 MySQL 数据库, 数据库连接需要在 application.properties 中配置。
