@@ -6,6 +6,10 @@
   min-height: 100vh;
   background: var(--art-bg-color);
 
+  .app-sidebar {
+    flex-shrink: 0;
+  }
+
   #app-main {
     display: flex;
     flex: 1;
@@ -55,6 +59,14 @@
 @media only screen and (max-width: $device-ipad) {
   .app-layout {
     position: relative;
+
+    .app-sidebar {
+      position: fixed;
+      top: 0;
+      left: 0;
+      z-index: 300;
+      height: 100vh;
+    }
 
     #app-main {
       width: 100%;

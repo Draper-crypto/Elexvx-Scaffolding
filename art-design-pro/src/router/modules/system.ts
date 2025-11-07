@@ -65,16 +65,7 @@ export const systemRoutes: AppRouteRecord = {
         keepAlive: true
       },
       children: [
-        {
-          path: 'menu1',
-          name: 'NestedMenu1',
-          component: '/system/nested/menu1',
-          meta: {
-            title: 'menus.system.menu1',
-            icon: '&#xe676;',
-            keepAlive: true
-          }
-        },
+        
         {
           path: 'menu2',
           name: 'NestedMenu2',
@@ -85,16 +76,7 @@ export const systemRoutes: AppRouteRecord = {
             keepAlive: true
           },
           children: [
-            {
-              path: 'menu2-1',
-              name: 'NestedMenu2-1',
-              component: '/system/nested/menu2',
-              meta: {
-                title: 'menus.system.menu21',
-                icon: '&#xe676;',
-                keepAlive: true
-              }
-            }
+            
           ]
         },
         {
@@ -108,16 +90,6 @@ export const systemRoutes: AppRouteRecord = {
           },
           children: [
             {
-              path: 'menu3-1',
-              name: 'NestedMenu3-1',
-              component: '/system/nested/menu3',
-              meta: {
-                title: 'menus.system.menu31',
-                icon: '&#xe676;',
-                keepAlive: true
-              }
-            },
-            {
               path: 'menu3-2',
               name: 'NestedMenu3-2',
               component: '',
@@ -127,16 +99,7 @@ export const systemRoutes: AppRouteRecord = {
                 keepAlive: true
               },
               children: [
-                {
-                  path: 'menu3-2-1',
-                  name: 'NestedMenu3-2-1',
-                  component: '/system/nested/menu3/menu3-2',
-                  meta: {
-                    title: 'menus.system.menu321',
-                    icon: '&#xe676;',
-                    keepAlive: true
-                  }
-                }
+                
               ]
             }
           ]

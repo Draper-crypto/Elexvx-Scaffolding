@@ -15,6 +15,8 @@ import '@icons/system/iconfont.css'                 // 系统图标
 import '@utils/sys/console.ts'                      // 控制台输出内容
 import { setupGlobDirectives } from './directives'
 import { setupErrorHandle } from './utils/sys/error-handle'
+import { useSettingStore } from './store/modules/setting'
+import { MenuTypeEnum } from './enums/appEnum'
 
 document.addEventListener(
   'touchstart',
@@ -27,6 +29,10 @@ initStore(app)
 initRouter(app)
 setupGlobDirectives(app)
 setupErrorHandle(app)
+
+// 强制使用左侧菜单布局，避免持久化配置导致侧边栏不显示
+const settingStore = useSettingStore()
+settingStore.switchMenuLayouts(MenuTypeEnum.LEFT)
 
 app.use(language)
 app.mount('#app')

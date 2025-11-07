@@ -220,13 +220,10 @@ async function getMenuData(router: Router): Promise<void> {
 async function processFrontendMenu(router: Router): Promise<void> {
   const menuList = asyncRoutes.map((route) => menuDataToRouter(route))
   const userStore = useUserStore()
-  const roles = userStore.info.roles
+  const roles = userStore.info.roles ?? []
 
-  if (!roles) {
-    throw new Error('获取用户角色失败')
-  }
-
-  const filteredMenuList = filterMenuByRoles(menuList, roles)
+  // 如果没有角色信息（前端模式下可能未获取到用户信息），则不做过滤，直接使用完整菜单
+  const filteredMenuList = roles.length > 0 ? filterMenuByRoles(menuList, roles) : menuList
 
   await registerAndStoreMenu(router, filteredMenuList)
 }
@@ -353,8 +350,17 @@ async function fetchUserInfoIfNeeded(from: RouteLocationNormalized): Promise<voi
   const needFetch = isRefresh || !userStore.info || Object.keys(userStore.info).length === 0
 
   if (needFetch) {
-    const data = await fetchGetUserInfo()
-    userStore.setUserInfo(data)
+    try {
+      const data = await fetchGetUserInfo()
+      userStore.setUserInfo(data)
+    } catch (error) {
+      // 前端模式下，用户信息获取失败不影响菜单注册，跳过错误
+      if (useCommon().isFrontendMode.value) {
+        console.warn('前端模式下获取用户信息失败，跳过：', error)
+      } else {
+        throw error
+      }
+    }
   }
 }
 
