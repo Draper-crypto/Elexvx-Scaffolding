@@ -118,6 +118,18 @@ public class AccServerApplication {
                         .enabled(true)
                         .build();
                 menuRepository.save(menusMenu);
+
+                // 更新日志菜单
+                Menu changelogMenu = Menu.builder()
+                        .parentId(system.getId())
+                        .menuType(2)
+                        .menuName("Changelog")
+                        .routePath("/system/changelog")
+                        .componentPath("/change/log/index")
+                        .orderNum(4)
+                        .enabled(true)
+                        .build();
+                menuRepository.save(changelogMenu);
             }
         };
     }

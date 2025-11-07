@@ -77,6 +77,13 @@ public class SystemController {
 
         children.add(createRoute("menu", "Menus", "/system/menu", menuMeta));
 
+        // 更新日志页面
+        children.add(createRoute("changelog", "Changelog", "/system/changelog", Map.of(
+                "title", "更新日志",
+                "keepAlive", true,
+                "roles", Arrays.asList("R_SUPER", "R_ADMIN")
+        )));
+
         system.put("children", children);
         menuList.add(system);
 

@@ -13,6 +13,7 @@ C:\Users\Administrator\Documents\GitHub\Elexvx-Scaffolding\acc-server\src\main\j
 C:\Users\Administrator\Documents\GitHub\Elexvx-Scaffolding\acc-server\src\main\java\com\elexvx\acc\AccServerApplication.java
 C:\Users\Administrator\Documents\GitHub\Elexvx-Scaffolding\acc-server\src\main\java\com\elexvx\acc\controller\AuthController.java
 C:\Users\Administrator\Documents\GitHub\Elexvx-Scaffolding\acc-server\src\main\java\com\elexvx\acc\service\MenuService.java
+C:\Users\Administrator\Documents\GitHub\Elexvx-Scaffolding\acc-server\src\main\java\com\elexvx\acc\dto\ChangelogUpdateRequest.java
 C:\Users\Administrator\Documents\GitHub\Elexvx-Scaffolding\acc-server\src\main\java\com\elexvx\acc\dto\admin\RoleCreateRequest.java
 C:\Users\Administrator\Documents\GitHub\Elexvx-Scaffolding\acc-server\src\main\java\com\elexvx\acc\controller\admin\AdminUserController.java
 C:\Users\Administrator\Documents\GitHub\Elexvx-Scaffolding\acc-server\src\main\java\com\elexvx\acc\controller\DictController.java
