@@ -48,10 +48,7 @@ const axiosInstance = axios.create({
 axiosInstance.interceptors.request.use(
   (request: InternalAxiosRequestConfig) => {
     const { accessToken } = useUserStore()
-    if (accessToken) {
-      const bearer = accessToken.startsWith('Bearer ') ? accessToken : `Bearer ${accessToken}`
-      request.headers.set('Authorization', bearer)
-    }
+    if (accessToken) request.headers.set('Authorization', accessToken)
 
     if (request.data && !(request.data instanceof FormData) && !request.headers['Content-Type']) {
       request.headers.set('Content-Type', 'application/json')
@@ -66,24 +63,16 @@ axiosInstance.interceptors.request.use(
   }
 )
 
-/** 响应拦截器（兼容后端原生 JSON 与带 code 包装的响应） */
+/** 响应拦截器 */
 axiosInstance.interceptors.response.use(
-  (response: AxiosResponse<any>) => {
-    const data = response.data
-    const hasCode = data && typeof data === 'object' && 'code' in data
-
-    if (!hasCode) {
-      return response
-    }
-
-    const { code, msg } = data as Http.BaseResponse
+  (response: AxiosResponse<Http.BaseResponse>) => {
+    const { code, msg } = response.data
     if (code === ApiStatus.success) return response
-    if (code === ApiStatus.unauthorized || code === ApiStatus.forbidden) handleUnauthorizedError(msg)
+    if (code === ApiStatus.unauthorized) handleUnauthorizedError(msg)
     throw createHttpError(msg || $t('httpMsg.requestFailed'), code)
   },
   (error) => {
-    const status = error.response?.status
-    if (status === ApiStatus.unauthorized || status === ApiStatus.forbidden) handleUnauthorizedError()
+    if (error.response?.status === ApiStatus.unauthorized) handleUnauthorizedError()
     return Promise.reject(handleError(error))
   }
 )
@@ -169,15 +158,14 @@ async function request<T = any>(config: ExtendedAxiosRequestConfig): Promise<T> 
   }
 
   try {
-    const res = await axiosInstance.request<any>(config)
-    const data = res.data
-    const hasCode = data && typeof data === 'object' && 'code' in data
+    const res = await axiosInstance.request<Http.BaseResponse<T>>(config)
 
-    if (hasCode && config.showSuccessMessage && data.msg) {
-      showSuccess(data.msg)
+    // 显示成功消息
+    if (config.showSuccessMessage && res.data.msg) {
+      showSuccess(res.data.msg)
     }
 
-    return (hasCode ? (data.data as T) : (data as T))
+    return res.data.data as T
   } catch (error) {
     if (error instanceof HttpError && error.code !== ApiStatus.unauthorized) {
       const showMsg = config.showErrorMessage !== false

@@ -12,6 +12,7 @@
 <script setup lang="ts">
   import { echarts } from '@/utils/echarts'
   import { useSettingStore } from '@/store/modules/setting'
+  import chinaMapJson from '@/mock/json/chinaMap.json'
   import type { MapChartProps } from '@/types/component/chart'
 
   defineOptions({ name: 'ArtMapChart' })
@@ -37,7 +38,7 @@
 
   // 检查是否为空数据
   const isEmpty = computed(() => {
-    return props.isEmpty || !props.mapData?.length
+    return props.isEmpty || (!props.mapData?.length && !chinaMapJson)
   })
 
   // 根据 geoJson 数据准备地图数据
@@ -201,8 +202,8 @@
 
     chartInstance.value = echarts.init(chinaMapRef.value)
 
-    // 依赖外部传入的地图数据，不再引入本地 mock geoJson
-    const mapData = props.mapData.length > 0 ? props.mapData : []
+    echarts.registerMap('china', chinaMapJson as any)
+    const mapData = props.mapData.length > 0 ? props.mapData : prepareMapData(chinaMapJson)
     const option = createChartOption(mapData)
 
     chartInstance.value.setOption(option)

@@ -1,12 +1,13 @@
 import { AppRouteRecord } from '@/types/router'
 
 export const dashboardRoutes: AppRouteRecord = {
-  path: '/dashboard',
   name: 'Dashboard',
+  path: '/dashboard',
   component: '/index/index',
   meta: {
     title: 'menus.dashboard.title',
-    icon: '&#xe7fe;'
+    icon: '&#xe721;',
+    roles: ['R_SUPER', 'R_ADMIN']
   },
   children: [
     {
@@ -15,7 +16,8 @@ export const dashboardRoutes: AppRouteRecord = {
       component: '/dashboard/console',
       meta: {
         title: 'menus.dashboard.console',
-        keepAlive: true
+        keepAlive: false,
+        fixedTab: true
       }
     },
     {
@@ -24,7 +26,7 @@ export const dashboardRoutes: AppRouteRecord = {
       component: '/dashboard/analysis',
       meta: {
         title: 'menus.dashboard.analysis',
-        keepAlive: true
+        keepAlive: false
       }
     },
     {
@@ -33,9 +35,8 @@ export const dashboardRoutes: AppRouteRecord = {
       component: '/dashboard/ecommerce',
       meta: {
         title: 'menus.dashboard.ecommerce',
-        keepAlive: true
+        keepAlive: false
       }
     }
   ]
 }
-

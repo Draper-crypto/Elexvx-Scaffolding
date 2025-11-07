@@ -118,7 +118,7 @@
   import AppConfig from '@/config'
   import { useSettingStore } from '@/store/modules/setting'
   import { MenuTypeEnum, MenuWidth } from '@/enums/appEnum'
-  import { getRuntimeMenuList } from '@/router/utils/registerRoutes'
+  import { useMenuStore } from '@/store/modules/menu'
   import { isIframe } from '@/utils/navigation'
   import { handleMenuJump } from '@/utils/navigation'
   import SidebarSubmenu from './widget/SidebarSubmenu.vue'
@@ -156,29 +156,16 @@
 
   // 路由相关
   const firstLevelMenuPath = computed(() => route.matched[0]?.path)
-  // 规范化 default-active，使其与 ElMenuItem 的 index 对齐（相对子路径时取最后一级片段）
-  const routerPath = computed(() => {
-    const fullPath = String(route.meta.activePath || route.path)
-    const segments = fullPath.split('/').filter(Boolean)
-    if (segments.length <= 1) return fullPath
-
-    // 找到当前顶级菜单的子项，判断是否采用相对子路径
-    const currentTopPath = `/${segments[0]}`
-    const currentMenu = getRuntimeMenuList().find((menu) => menu.path === currentTopPath)
-    const children = currentMenu?.children || []
-    const hasRelativeChild = children.some((c) => c.path && !String(c.path).includes('/'))
-
-    // 如果子项是相对路径（如 'console'），则取最后一级片段作为 active 索引
-    return hasRelativeChild ? segments[segments.length - 1] : fullPath
-  })
+  const routerPath = computed(() => String(route.meta.activePath || route.path))
 
   // 菜单数据
   const firstLevelMenus = computed(() => {
-    return getRuntimeMenuList().filter((menu) => !menu.meta.isHide)
+    return useMenuStore().menuList.filter((menu) => !menu.meta.isHide)
   })
 
   const menuList = computed(() => {
-    const allMenus = getRuntimeMenuList()
+    const menuStore = useMenuStore()
+    const allMenus = menuStore.menuList
 
     // 如果不是顶部左侧菜单或双列菜单，直接返回完整菜单列表
     if (!isTopLeftMenu.value && !isDualMenu.value) {

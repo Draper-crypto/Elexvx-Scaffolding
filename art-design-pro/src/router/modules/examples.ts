@@ -57,6 +57,58 @@ export const examplesRoutes: AppRouteRecord = {
         }
       ]
     },
-    // 其他示例页面已移除，仅保留权限演示
+    {
+      path: 'tabs',
+      name: 'Tabs',
+      component: '/examples/tabs',
+      meta: {
+        title: 'menus.examples.tabs'
+      }
+    },
+    {
+      path: 'tables/basic',
+      name: 'TablesBasic',
+      component: '/examples/tables/basic',
+      meta: {
+        title: 'menus.examples.tablesBasic',
+        keepAlive: true
+      }
+    },
+    {
+      path: 'tables',
+      name: 'Tables',
+      component: '/examples/tables',
+      meta: {
+        title: 'menus.examples.tables',
+        keepAlive: true
+      }
+    },
+    {
+      path: 'forms',
+      name: 'Forms',
+      component: '/examples/forms',
+      meta: {
+        title: 'menus.examples.forms',
+        keepAlive: true
+      }
+    },
+    {
+      path: 'form/search-bar',
+      name: 'SearchBar',
+      component: '/examples/forms/search-bar',
+      meta: {
+        title: 'menus.examples.searchBar',
+        keepAlive: true
+      }
+    },
+    {
+      path: 'tables/tree',
+      name: 'TablesTree',
+      component: '/examples/tables/tree',
+      meta: {
+        title: 'menus.examples.tablesTree',
+        keepAlive: true
+      }
+    }
   ]
 }

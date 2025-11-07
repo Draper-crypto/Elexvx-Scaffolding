@@ -26,14 +26,8 @@
 <script setup lang="ts">
   import { ref } from 'vue'
   import CommentItem from './widget/CommentItem.vue'
-  type Comment = {
-    id: number
-    author: string
-    content: string
-    timestamp: string
-    replies: Comment[]
-  }
-  const comments = ref<Comment[]>([])
+  import { commentList, Comment } from '@/mock/temp/commentDetail'
+  const comments = commentList
 
   const newComment = ref<Partial<Comment>>({
     author: '',

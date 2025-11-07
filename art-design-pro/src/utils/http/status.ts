@@ -8,7 +8,6 @@ export enum ApiStatus {
   forbidden = 403, // 禁止访问
   notFound = 404, // 未找到
   methodNotAllowed = 405, // 方法不允许
-  conflict = 409, // 请求冲突
   requestTimeout = 408, // 请求超时
   internalServerError = 500, // 服务器错误
   notImplemented = 501, // 未实现

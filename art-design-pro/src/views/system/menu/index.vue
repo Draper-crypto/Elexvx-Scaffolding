@@ -54,14 +54,8 @@
   import { useTableColumns } from '@/composables/useTableColumns'
   import type { AppRouteRecord } from '@/types/router'
   import MenuDialog from './modules/menu-dialog.vue'
-  import {
-    fetchGetMenuList,
-    fetchCreateMenu,
-    fetchUpdateMenu,
-    fetchDeleteMenu
-  } from '@/api/system-manage'
-  import { ElTag, ElMessageBox, ElMessage } from 'element-plus'
-  // 移除静态路由模块导入，菜单仅来源后端
+  import { fetchGetMenuList } from '@/api/system-manage'
+  import { ElTag, ElMessageBox } from 'element-plus'
 
   defineOptions({ name: 'Menus' })
 
@@ -69,8 +63,6 @@
   const loading = ref(false)
   const isExpanded = ref(false)
   const tableRef = ref()
-  const currentParentId = ref<number | null>(null)
-  const currentEditAuthId = ref<number | null>(null)
 
   // 弹窗相关
   const dialogVisible = ref(false)
@@ -114,33 +106,9 @@
 
     try {
       const list = await fetchGetMenuList()
-      if (!Array.isArray(list) || list.length === 0) {
-        ElMessage.info('当前没有菜单数据，请先在后端添加')
-        tableData.value = []
-      } else {
-        tableData.value = list
-      }
-    } catch (error: any) {
-      // 友好处理菜单加载异常，提示用户并保持空列表
-      try {
-        // 尝试使用统一错误展示
-        const { isHttpError, showError } = await import('@/utils/http/error')
-        const { ApiStatus } = await import('@/utils/http/status')
-        if (isHttpError(error)) {
-          showError(error)
-          if (error.status === ApiStatus.unauthorized || error.status === ApiStatus.forbidden) {
-            ElMessage.warning('无权限加载菜单')
-          } else {
-            ElMessage.error('菜单加载失败')
-          }
-        } else {
-          ElMessage.error('菜单加载失败')
-        }
-      } catch (_) {
-        // 回退兜底：不依赖按需导入也能提示
-        ElMessage.error('菜单加载失败')
-      }
-      tableData.value = []
+      tableData.value = list
+    } catch (error) {
+      throw error instanceof Error ? error : new Error('获取菜单失败')
     } finally {
       loading.value = false
     }
@@ -236,7 +204,7 @@
             }),
             h(ArtButtonTable, {
               type: 'delete',
-              onClick: () => handleDeleteAuth(row)
+              onClick: () => handleDeleteAuth()
             })
           ])
         }
@@ -244,7 +212,7 @@
         return h('div', buttonStyle, [
           h(ArtButtonTable, {
             type: 'add',
-            onClick: () => handleAddAuth(row),
+            onClick: () => handleAddAuth(),
             title: '新增权限'
           }),
           h(ArtButtonTable, {
@@ -253,7 +221,7 @@
           }),
           h(ArtButtonTable, {
             type: 'delete',
-            onClick: () => handleDeleteMenu(row)
+            onClick: () => handleDeleteMenu()
           })
         ])
       }
@@ -288,24 +256,6 @@
   }
 
   /**
-   * 全局刷新菜单/路由
-   * - 重置动态路由状态并重新导航触发守卫
-   */
-  const refreshGlobalRoutes = async (): Promise<void> => {
-    try {
-      const router = useRouter()
-      const { resetRouterState } = await import('@/router/guards/beforeEach')
-      resetRouterState()
-      router.replace(router.currentRoute.value.fullPath)
-    } catch (error) {
-      // 静默兜底：不影响当前列表刷新
-      console.warn('全局刷新失败，降级为列表刷新', error)
-    }
-  }
-
-  // 已移除静态路由导入功能，确保菜单仅来源后端(MySQL)
-
-  /**
    * 深度克隆对象
    * @param obj 要克隆的对象
    * @returns 克隆后的对象
@@ -338,16 +288,15 @@
       }
 
       if (item.meta?.authList?.length) {
-        const authChildren: AppRouteRecord[] = (item.meta.authList as any[]).map(
-          (auth: { id?: number; title: string; authMark: string }) => ({
-            id: auth.id,
+        const authChildren: AppRouteRecord[] = item.meta.authList.map(
+          (auth: { title: string; authMark: string }) => ({
             path: `${item.path}_auth_${auth.authMark}`,
             name: `${String(item.name)}_auth_${auth.authMark}`,
             meta: {
               title: auth.title,
               authMark: auth.authMark,
               isAuthButton: true,
-              parentId: item.id
+              parentPath: item.path
             }
           })
         )
@@ -414,11 +363,10 @@
   /**
    * 添加权限按钮
    */
-  const handleAddAuth = (row: AppRouteRecord): void => {
-    dialogType.value = 'button'
+  const handleAddAuth = (): void => {
+    dialogType.value = 'menu'
     editData.value = null
     lockMenuType.value = false
-    currentParentId.value = Number(row.id) || null
     dialogVisible.value = true
   }
 
@@ -444,8 +392,6 @@
       authMark: row.meta?.authMark
     }
     lockMenuType.value = false
-    currentEditAuthId.value = Number((row as any).id) || null
-    currentParentId.value = Number((row as any).meta?.parentId ?? (row as any).parentId) || null
     dialogVisible.value = true
   }
 
@@ -467,73 +413,23 @@
    * @param formData 表单数据
    */
   const handleSubmit = (formData: MenuFormData): void => {
-    const isButton = dialogType.value === 'button'
-    const isEdit = Number((formData as any).id) > 0 || (isButton && currentEditAuthId.value)
-
-    const payload: any = isButton
-      ? {
-          parentId: currentParentId.value,
-          menuType: 3,
-          menuName: formData.authName,
-          permissionHint: formData.authLabel,
-          orderNum: formData.authSort ?? 1,
-          enabled: true
-        }
-      : {
-          parentId: null,
-          menuType: 2,
-          menuName: formData.name,
-          routePath: formData.path || '',
-          routeName: formData.label || '',
-          componentPath: formData.component || '',
-          icon: formData.icon || '',
-          orderNum: formData.sort ?? 1,
-          externalLink: formData.link || '',
-          badgeText: formData.showTextBadge || '',
-          activePath: formData.activePath || '',
-          enabled: formData.isEnable ?? true,
-          cachePage: formData.keepAlive ?? false,
-          hiddenMenu: formData.isHide ?? false,
-          embedded: formData.isIframe ?? false,
-          showBadge: formData.showBadge ?? false,
-          affix: formData.fixedTab ?? false,
-          hideTab: formData.isHideTab ?? false,
-          fullScreen: formData.isFullPage ?? false
-        }
-
-    const doRequest = async () => {
-      if (isEdit) {
-        const idToUpdate = isButton ? Number(currentEditAuthId.value) : Number((formData as any).id)
-        if (!idToUpdate) throw new Error('无效的编辑ID')
-        await fetchUpdateMenu(idToUpdate, payload)
-      } else {
-        await fetchCreateMenu(payload)
-      }
-      ElMessage.success(`${isEdit ? '编辑' : '新增'}成功`)
-      getMenuList()
-      await refreshGlobalRoutes()
-    }
-
-    doRequest().catch((err) => {
-      console.error(err)
-      ElMessage.error(`${isEdit ? '编辑' : '新增'}失败`)
-    })
+    console.log('提交数据:', formData)
+    // TODO: 调用API保存数据
+    getMenuList()
   }
 
   /**
    * 删除菜单
    */
-  const handleDeleteMenu = async (row: AppRouteRecord): Promise<void> => {
+  const handleDeleteMenu = async (): Promise<void> => {
     try {
       await ElMessageBox.confirm('确定要删除该菜单吗？删除后无法恢复', '提示', {
         confirmButtonText: '确定',
         cancelButtonText: '取消',
         type: 'warning'
       })
-      await fetchDeleteMenu(Number((row as any).id))
       ElMessage.success('删除成功')
       getMenuList()
-      await refreshGlobalRoutes()
     } catch (error) {
       if (error !== 'cancel') {
         ElMessage.error('删除失败')
@@ -544,17 +440,15 @@
   /**
    * 删除权限按钮
    */
-  const handleDeleteAuth = async (row: AppRouteRecord): Promise<void> => {
+  const handleDeleteAuth = async (): Promise<void> => {
     try {
       await ElMessageBox.confirm('确定要删除该权限吗？删除后无法恢复', '提示', {
         confirmButtonText: '确定',
         cancelButtonText: '取消',
         type: 'warning'
       })
-      await fetchDeleteMenu(Number((row as any).id))
       ElMessage.success('删除成功')
       getMenuList()
-      await refreshGlobalRoutes()
     } catch (error) {
       if (error !== 'cancel') {
         ElMessage.error('删除失败')

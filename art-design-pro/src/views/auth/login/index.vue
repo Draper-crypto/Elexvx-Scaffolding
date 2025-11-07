@@ -138,8 +138,8 @@
     {
       key: 'admin',
       label: t('login.roles.admin'),
-      userName: 'admin',
-      password: 'admin123',
+      userName: 'Admin',
+      password: '123456',
       roles: ['R_ADMIN']
     },
     {
@@ -176,7 +176,7 @@
   const loading = ref(false)
 
   onMounted(() => {
-    setupAccount('admin')
+    setupAccount('super')
   })
 
   // 设置账号
@@ -208,7 +208,7 @@
       const { username, password } = formData
 
       const { token, refreshToken } = await fetchLogin({
-        username,
+        userName: username,
         password
       })
 
