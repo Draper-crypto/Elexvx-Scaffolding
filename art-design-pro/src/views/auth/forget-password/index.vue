@@ -40,14 +40,16 @@
 </template>
 
 <script setup lang="ts">
-  import AppConfig from '@/config'
+  import { computed, ref } from 'vue'
+  import { useSystemConfigStore } from '@/store/modules/system-config'
 
   defineOptions({ name: 'ForgetPassword' })
 
   const router = useRouter()
   const showInputLabel = ref(false)
 
-  const systemName = AppConfig.systemInfo.name
+  const systemConfigStore = useSystemConfigStore()
+  const systemName = computed(() => systemConfigStore.brandName)
   const username = ref('')
   const loading = ref(false)
 

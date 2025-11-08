@@ -56,6 +56,15 @@ export const systemRoutes: AppRouteRecord = {
         ]
       }
     },
-    
+    {
+      path: 'settings',
+      name: 'SystemSettingsPage',
+      component: '/system/settings',
+      meta: {
+        title: 'menus.system.settings',
+        keepAlive: true,
+        roles: ['R_SUPER']
+      }
+    }
   ]
 }

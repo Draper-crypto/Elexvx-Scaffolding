@@ -68,6 +68,12 @@ public class AuthController {
     resp.put("userName", u.getUsername());
     resp.put("email", u.getEmail() == null ? "" : u.getEmail());
     resp.put("avatar", u.getAvatarUrl() == null ? "" : u.getAvatarUrl());
+    resp.put("fullName", u.getName() == null ? "" : u.getName());
+    resp.put("nickname", u.getNickname() == null ? "" : u.getNickname());
+    String displayName = u.getName();
+    if (displayName == null || displayName.isEmpty()) displayName = u.getNickname();
+    if (displayName == null || displayName.isEmpty()) displayName = u.getUsername();
+    resp.put("displayName", displayName);
     return ResponseEntity.ok(ApiResponse.success(resp));
   }
 

@@ -97,3 +97,17 @@ INSERT INTO `sys_menu` (
   NOW(), NOW()
 );
 
+-- 设置中心（页面）
+INSERT INTO `sys_menu` (
+  `parent_id`, `menu_type`, `menu_name`, `route_path`, `component_path`,
+  `permission_hint`, `icon`, `use_icon_picker`, `order_num`,
+  `external_link`, `badge_text`, `active_path`,
+  `enabled`, `cache_page`, `hidden_menu`, `embedded`, `show_badge`, `affix`, `hide_tab`, `full_screen`,
+  `created_at`, `updated_at`
+) VALUES (
+  @system_id, 2, '系统设置', '/system/settings', '/system/settings',
+  NULL, 'Setting', 0, 4,
+  NULL, NULL, NULL,
+  1, 0, 0, 0, 0, 0, 0, 0,
+  NOW(), NOW()
+);

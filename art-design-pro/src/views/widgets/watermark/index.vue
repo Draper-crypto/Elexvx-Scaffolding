@@ -3,7 +3,7 @@
     <!-- 基础文字水印 -->
     <ElCard class="card" shadow="never">
       <template #header>基础文字水印</template>
-      <ElWatermark content="Art Design Pro" :font="{ color: 'rgba(128, 128, 128, 0.2)' }">
+      <ElWatermark :content="brandName" :font="{ color: 'rgba(128, 128, 128, 0.2)' }">
         <div style="height: 200px"></div>
       </ElWatermark>
     </ElCard>
@@ -12,7 +12,7 @@
     <ElCard class="card" shadow="never">
       <template #header>多行文字水印</template>
       <ElWatermark
-        :content="['Art Design Pro', '专注用户体验，视觉设计']"
+        :content="[brandName, '专注用户体验，视觉设计']"
         :font="{ fontSize: 16, color: 'rgba(128, 128, 128, 0.2)' }"
       >
         <div style="height: 200px"></div>
@@ -31,7 +31,7 @@
     <ElCard class="card" shadow="never">
       <template #header>自定义样式水印</template>
       <ElWatermark
-        content="Art Design Pro"
+        :content="brandName"
         :font="{
           fontSize: 20,
           fontFamily: 'Arial',
@@ -54,11 +54,15 @@
 </template>
 
 <script setup lang="ts">
+  import { computed, ref } from 'vue'
   import { useSettingStore } from '@/store/modules/setting'
+  import { useSystemConfigStore } from '@/store/modules/system-config'
 
   defineOptions({ name: 'Watermark' })
 
   const settingStore = useSettingStore()
+  const systemConfigStore = useSystemConfigStore()
+  const brandName = computed(() => systemConfigStore.brandName)
 
   /**
    * 水印图片 URL

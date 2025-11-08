@@ -10,5 +10,5 @@ import java.util.List;
 public interface SysRolePermissionRepository extends JpaRepository<SysRolePermission, Long> {
   List<SysRolePermission> findByRoleId(Long roleId);
   void deleteByRoleId(Long roleId);
+  void deleteByPermissionId(Long permissionId);
 }
-

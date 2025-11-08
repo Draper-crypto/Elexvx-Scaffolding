@@ -10,8 +10,8 @@
       </ElCol>
       <ElCol :xs="24" :sm="12" :md="12">
         <ArtBasicBanner
-          title="欢迎使用 Art Design Pro"
-          subtitle="基于 Vue 3 + TypeScript + Element Plus 构建的现代化管理系统。"
+          :title="`欢迎使用 ${brandName}`"
+          :subtitle="`${brandName} 基于 Vue 3 + TypeScript + Element Plus 构建的现代化管理系统。`"
           titleColor="#333"
           subtitleColor="#666"
           backgroundColor="#D4F1F7"
@@ -122,7 +122,7 @@
         <ArtCardBanner
           :image="icon4"
           title="版本更新提醒"
-          description="Art Design Pro v2.1.0 已发布，包含性能优化和新功能。"
+          :description="`${brandName} v2.1.0 已发布，包含性能优化和新功能。`"
           :button="{
             show: true,
             text: '立即更新',
@@ -144,12 +144,17 @@
 </template>
 
 <script setup lang="ts">
+  import { computed } from 'vue'
   import icon2 from '@imgs/3d/icon2.webp'
   import icon3 from '@imgs/3d/icon3.webp'
   import icon4 from '@imgs/3d/icon4.webp'
   import icon5 from '@imgs/3d/icon7.webp'
+  import { useSystemConfigStore } from '@/store/modules/system-config'
 
   defineOptions({ name: 'TemplateBanners' })
+
+  const systemConfigStore = useSystemConfigStore()
+  const brandName = computed(() => systemConfigStore.brandName)
 
   /**
    * 处理横幅点击事件

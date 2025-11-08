@@ -1,6 +1,7 @@
 package com.elexvx.acc.controller;
 
 import cn.dev33.satoken.annotation.SaCheckPermission;
+import cn.dev33.satoken.stp.StpUtil;
 import com.elexvx.acc.dto.MenuDtos.*;
 import com.elexvx.acc.service.MenuService;
 import org.springframework.http.ResponseEntity;
@@ -41,6 +42,27 @@ public class AdminMenuController {
   @PutMapping("/{id}/permissions")
   @SaCheckPermission("sys:menu:bindperms")
   public ResponseEntity<Void> bindPermissions(@PathVariable Long id, @RequestBody BindMenuPermissionsRequest req) { menuService.bindPermissions(id, req); return ResponseEntity.noContent().build(); }
+
+  @PostMapping("/{id}/auths")
+  @SaCheckPermission("sys:menu:auth:create")
+  public ResponseEntity<ApiResponse<MenuAuth>> createAuth(@PathVariable Long id, @RequestBody MenuAuthRequest req) {
+    Long operator = StpUtil.getLoginIdAsLong();
+    return ResponseEntity.ok(ApiResponse.success(menuService.createAuth(id, req, operator)));
+  }
+
+  @PutMapping("/{id}/auths/{authId}")
+  @SaCheckPermission("sys:menu:auth:update")
+  public ResponseEntity<ApiResponse<MenuAuth>> updateAuth(@PathVariable Long id, @PathVariable Long authId, @RequestBody MenuAuthRequest req) {
+    Long operator = StpUtil.getLoginIdAsLong();
+    return ResponseEntity.ok(ApiResponse.success(menuService.updateAuth(id, authId, req, operator)));
+  }
+
+  @DeleteMapping("/{id}/auths/{authId}")
+  @SaCheckPermission("sys:menu:auth:delete")
+  public ResponseEntity<Void> deleteAuth(@PathVariable Long id, @PathVariable Long authId) {
+    menuService.deleteAuth(id, authId);
+    return ResponseEntity.noContent().build();
+  }
 
   // 初始化演示菜单：仅当数据库为空时插入基础菜单
   @PostMapping("/init-demo")

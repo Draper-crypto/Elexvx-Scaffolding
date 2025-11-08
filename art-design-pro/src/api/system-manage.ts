@@ -85,6 +85,46 @@ export function fetchGetMenuList() {
   }).then((trees) => transformMenuTrees(trees))
 }
 
+export function fetchCreateMenu(data: Api.SystemManage.MenuSubmitData) {
+  return request.post<any>({
+    url: '/api/admin/menus',
+    data
+  })
+}
+
+export function fetchUpdateMenu(id: number, data: Api.SystemManage.MenuSubmitData) {
+  return request.put<any>({
+    url: `/api/admin/menus/${id}`,
+    data
+  })
+}
+
+export function fetchDeleteMenu(id: number) {
+  return request.del<void>({
+    url: `/api/admin/menus/${id}`
+  })
+}
+
+export function fetchCreateMenuAuth(menuId: number, data: Api.SystemManage.MenuAuthData) {
+  return request.post<Api.SystemManage.MenuAuthData>({
+    url: `/api/admin/menus/${menuId}/auths`,
+    data
+  })
+}
+
+export function fetchUpdateMenuAuth(menuId: number, authId: number, data: Api.SystemManage.MenuAuthData) {
+  return request.put<Api.SystemManage.MenuAuthData>({
+    url: `/api/admin/menus/${menuId}/auths/${authId}`,
+    data
+  })
+}
+
+export function fetchDeleteMenuAuth(menuId: number, authId: number) {
+  return request.del<void>({
+    url: `/api/admin/menus/${menuId}/auths/${authId}`
+  })
+}
+
 function transformMenuTrees(trees: any[]): AppRouteRecord[] {
   return (trees || []).map((node) => transformNode(node))
 }
@@ -92,6 +132,7 @@ function transformMenuTrees(trees: any[]): AppRouteRecord[] {
 function transformNode(node: any): AppRouteRecord {
   const route: AppRouteRecord = {
     id: Number(node.id),
+    parentId: node.parentId != null ? Number(node.parentId) : null,
     path: String(node.routePath || '').trim(),
     name: String(node.menuName || ''),
     component:
@@ -106,9 +147,20 @@ function transformNode(node: any): AppRouteRecord {
       isFullPage: !!node.fullScreen,
       isIframe: !!node.embedded,
       showBadge: !!node.showBadge,
+      showTextBadge: node.badgeText || '',
+      permissionHint: node.permissionHint || '',
       activePath: node.activePath || '',
+      menuType: Number(node.menuType || 2),
+      orderNum: node.orderNum ?? 0,
+      externalLink: node.externalLink || '',
+      useIconPicker: !!node.useIconPicker,
       authList: Array.isArray(node.authList)
-        ? node.authList.map((a: any) => ({ authMark: String(a.authMark || ''), title: String(a.title || '') }))
+        ? node.authList.map((a: any) => ({
+            id: a.id != null ? Number(a.id) : undefined,
+            menuId: a.menuId != null ? Number(a.menuId) : undefined,
+            authMark: String(a.authMark || ''),
+            title: String(a.title || '')
+          }))
         : []
     },
     children: Array.isArray(node.children)

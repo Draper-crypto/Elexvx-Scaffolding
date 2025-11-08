@@ -4,12 +4,15 @@ import com.elexvx.acc.dto.MenuDtos.*;
 import com.elexvx.acc.entity.SysMenu;
 import com.elexvx.acc.entity.SysMenuPermission;
 import com.elexvx.acc.entity.SysPermission;
+import com.elexvx.acc.entity.SysRolePermission;
 import com.elexvx.acc.repo.SysMenuPermissionRepository;
 import com.elexvx.acc.repo.SysMenuRepository;
 import com.elexvx.acc.repo.SysPermissionRepository;
+import com.elexvx.acc.repo.SysRolePermissionRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -18,11 +21,16 @@ public class MenuService {
   private final SysMenuRepository menuRepo;
   private final SysMenuPermissionRepository menuPermRepo;
   private final SysPermissionRepository permRepo;
+  private final SysRolePermissionRepository rolePermRepo;
 
-  public MenuService(SysMenuRepository menuRepo, SysMenuPermissionRepository menuPermRepo, SysPermissionRepository permRepo) {
+  public MenuService(SysMenuRepository menuRepo,
+                     SysMenuPermissionRepository menuPermRepo,
+                     SysPermissionRepository permRepo,
+                     SysRolePermissionRepository rolePermRepo) {
     this.menuRepo = menuRepo;
     this.menuPermRepo = menuPermRepo;
     this.permRepo = permRepo;
+    this.rolePermRepo = rolePermRepo;
   }
 
   public List<MenuTree> tree() {
@@ -62,8 +70,16 @@ public class MenuService {
 
   @Transactional
   public void delete(Long id) {
-    // 删除子节点可在数据库层面使用 ON DELETE CASCADE；此处简化为直接删除当前节点及其绑定
-    menuPermRepo.deleteByMenuId(id);
+    // 递归删除子节点
+    List<SysMenu> children = menuRepo.findByParentIdOrderByOrderNumAsc(id);
+    for (SysMenu child : children) {
+      delete(child.getId());
+    }
+    // 删除菜单与权限绑定
+    List<SysMenuPermission> bindings = menuPermRepo.findByMenuId(id);
+    for (SysMenuPermission binding : bindings) {
+      removePermissionBinding(binding.getPermissionId(), binding.getMenuId());
+    }
     menuRepo.deleteById(id);
   }
 
@@ -106,9 +122,11 @@ public class MenuService {
     // 绑定的权限列表
     for (SysMenuPermission mp : menuPermRepo.findByMenuId(m.getId())) {
       MenuAuth a = new MenuAuth();
+      a.id = mp.getPermissionId();
+      a.menuId = mp.getMenuId();
       java.util.Optional<SysPermission> p = permRepo.findById(mp.getPermissionId());
-      a.authMark = p.map(pp -> pp.getPermCode()).orElse(String.valueOf(mp.getPermissionId()));
-      a.title = p.map(pp -> pp.getPermName()).orElse(a.authMark);
+      a.authMark = p.map(SysPermission::getPermCode).orElse(String.valueOf(mp.getPermissionId()));
+      a.title = p.map(SysPermission::getPermName).orElse(a.authMark);
       t.authList.add(a);
     }
     return t;
@@ -130,7 +148,7 @@ public class MenuService {
   private SysMenu fromCreate(MenuCreateRequest req) {
     SysMenu m = new SysMenu();
     m.setParentId(req.parentId);
-    m.setMenuType(req.menuType);
+    m.setMenuType(req.menuType != null ? req.menuType : 2);
     m.setMenuName(req.menuName);
     m.setRoutePath(req.routePath);
     m.setComponentPath(req.componentPath);
@@ -149,6 +167,9 @@ public class MenuService {
     m.setAffix(fromBool(req.affix));
     m.setHideTab(fromBool(req.hideTab));
     m.setFullScreen(fromBool(req.fullScreen));
+    LocalDateTime now = LocalDateTime.now();
+    m.setCreatedAt(now);
+    m.setUpdatedAt(now);
     return m;
   }
 
@@ -173,10 +194,85 @@ public class MenuService {
     if (req.affix != null) m.setAffix(fromBool(req.affix));
     if (req.hideTab != null) m.setHideTab(fromBool(req.hideTab));
     if (req.fullScreen != null) m.setFullScreen(fromBool(req.fullScreen));
+    m.setUpdatedAt(LocalDateTime.now());
   }
 
   private Boolean toBool(Integer v) { return v != null && v != 0; }
   private Integer fromBool(Boolean v) { return v != null && v ? 1 : 0; }
+
+  @Transactional
+  public MenuAuth createAuth(Long menuId, MenuAuthRequest req, Long operatorId) {
+    SysMenu menu = menuRepo.findById(menuId).orElseThrow(() -> new RuntimeException("Menu not found"));
+    if (req.authMark == null || req.authMark.isEmpty()) throw new RuntimeException("权限标识不能为空");
+    if (permRepo.existsByPermCode(req.authMark)) throw new RuntimeException("权限标识已存在");
+    SysPermission permission = new SysPermission();
+    permission.setPermCode(req.authMark);
+    permission.setPermName(req.title != null ? req.title : req.authMark);
+    permission.setPermType(3);
+    permission.setResource(menu.getRoutePath());
+    permission.setAction("BUTTON");
+    permission.setEffect(1);
+    LocalDateTime now = LocalDateTime.now();
+    permission.setCreatedAt(now);
+    permission.setUpdatedAt(now);
+    permission.setCreatedBy(operatorId);
+    permission.setUpdatedBy(operatorId);
+    permRepo.save(permission);
+
+    SysMenuPermission mp = new SysMenuPermission();
+    mp.setMenuId(menuId);
+    mp.setPermissionId(permission.getId());
+    menuPermRepo.save(mp);
+
+    MenuAuth auth = new MenuAuth();
+    auth.id = permission.getId();
+    auth.menuId = menuId;
+    auth.authMark = permission.getPermCode();
+    auth.title = permission.getPermName();
+    return auth;
+  }
+
+  @Transactional
+  public MenuAuth updateAuth(Long menuId, Long permissionId, MenuAuthRequest req, Long operatorId) {
+    menuRepo.findById(menuId).orElseThrow(() -> new RuntimeException("Menu not found"));
+    SysPermission permission = permRepo.findById(permissionId).orElseThrow(() -> new RuntimeException("权限不存在"));
+    if (req.authMark != null && !req.authMark.equals(permission.getPermCode())) {
+      if (permRepo.existsByPermCode(req.authMark)) throw new RuntimeException("权限标识已存在");
+      permission.setPermCode(req.authMark);
+    }
+    if (req.title != null) {
+      permission.setPermName(req.title);
+    }
+    permission.setUpdatedAt(LocalDateTime.now());
+    permission.setUpdatedBy(operatorId);
+    permRepo.save(permission);
+    MenuAuth auth = new MenuAuth();
+    auth.id = permission.getId();
+    auth.menuId = menuId;
+    auth.authMark = permission.getPermCode();
+    auth.title = permission.getPermName();
+    return auth;
+  }
+
+  @Transactional
+  public void deleteAuth(Long menuId, Long permissionId) {
+    menuRepo.findById(menuId).orElseThrow(() -> new RuntimeException("Menu not found"));
+    if (permissionId == null) return;
+    menuPermRepo.deleteByMenuIdAndPermissionId(menuId, permissionId);
+    removePermissionBinding(permissionId, null);
+  }
+
+  private void removePermissionBinding(Long permissionId, Long menuId) {
+    if (permissionId == null) return;
+    if (menuId != null) {
+      menuPermRepo.deleteByMenuIdAndPermissionId(menuId, permissionId);
+    }
+    if (menuPermRepo.countByPermissionId(permissionId) == 0) {
+      menuPermRepo.deleteByPermissionId(permissionId);
+      rolePermRepo.deleteByPermissionId(permissionId);
+      permRepo.deleteById(permissionId);
+    }
+  }
 
   // 演示菜单种子（仅当数据库为空时插入）
   @Transactional

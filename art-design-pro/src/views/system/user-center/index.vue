@@ -5,25 +5,25 @@
         <div class="user-wrap box-style">
           <img class="bg" src="@imgs/user/bg.webp" />
           <img class="avatar" src="@imgs/user/avatar.webp" />
-          <h2 class="name">{{ userInfo.userName }}</h2>
-          <p class="des">专注于用户体验跟视觉设计</p>
+          <h2 class="name">{{ form.realName || userInfo.displayName || userInfo.userName }}</h2>
+          <p class="des">{{ form.des || defaultBio }}</p>
 
           <div class="outer-info">
             <div>
               <i class="iconfont-sys">&#xe72e;</i>
-              <span>jdkjjfnndf@mall.com</span>
+              <span>{{ form.email || userInfo.email || '未填写' }}</span>
             </div>
             <div>
               <i class="iconfont-sys">&#xe608;</i>
-              <span>交互专家</span>
+              <span>{{ form.nikeName || '交互专家' }}</span>
             </div>
             <div>
               <i class="iconfont-sys">&#xe736;</i>
-              <span>广东省深圳市</span>
+              <span>{{ form.address || '未填写地址' }}</span>
             </div>
             <div>
               <i class="iconfont-sys">&#xe811;</i>
-              <span>字节跳动－某某平台部－UED</span>
+              <span>{{ form.mobile || '未填写电话' }}</span>
             </div>
           </div>
 
@@ -107,7 +107,14 @@
         <div class="info box-style" style="margin-top: 20px">
           <h1 class="title">更改密码</h1>
 
-          <ElForm :model="pwdForm" class="form" label-width="86px" label-position="top">
+          <ElForm
+            ref="pwdFormRef"
+            :model="pwdForm"
+            :rules="pwdRules"
+            class="form"
+            label-width="86px"
+            label-position="top"
+          >
             <ElFormItem label="当前密码" prop="password">
               <ElInput
                 v-model="pwdForm.password"
@@ -148,39 +155,47 @@
 </template>
 
 <script setup lang="ts">
+  import { computed, reactive, ref, onMounted } from 'vue'
+  import { computed, reactive, ref, onMounted } from 'vue'
   import { useUserStore } from '@/store/modules/user'
   import type { FormInstance, FormRules } from 'element-plus'
+  import { ElMessage } from 'element-plus'
+  import { fetchChangePassword, fetchUpdateProfile, fetchUserProfile } from '@/api/profile'
+  import { useSystemConfigStore } from '@/store/modules/system-config'
 
   defineOptions({ name: 'UserCenter' })
 
   const userStore = useUserStore()
+  const systemConfigStore = useSystemConfigStore()
   const userInfo = computed(() => userStore.getUserInfo)
+  const defaultBio = computed(() => `${systemConfigStore.brandName} 是一款兼具设计美学与高效开发的后台系统。`)
 
   const isEdit = ref(false)
   const isEditPwd = ref(false)
   const date = ref('')
   const ruleFormRef = ref<FormInstance>()
+  const pwdFormRef = ref<FormInstance>()
 
   /**
    * 用户信息表单
    */
   const form = reactive({
-    realName: 'John Snow',
-    nikeName: '皮卡丘',
-    email: '59301283@mall.com',
-    mobile: '18888888888',
-    address: '广东省深圳市宝安区西乡街道101栋201',
-    sex: '2',
-    des: 'Art Design Pro 是一款兼具设计美学与高效开发的后台系统.'
+    realName: '',
+    nikeName: '',
+    email: '',
+    mobile: '',
+    address: '',
+    sex: '',
+    des: defaultBio.value
   })
 
   /**
    * 密码修改表单
    */
   const pwdForm = reactive({
-    password: '123456',
-    newPassword: '123456',
-    confirmPassword: '123456'
+    password: '',
+    newPassword: '',
+    confirmPassword: ''
   })
 
   /**
@@ -201,6 +216,30 @@
     sex: [{ required: true, message: '请选择性别', trigger: 'blur' }]
   })
 
+  const pwdRules = reactive<FormRules>({
+    password: [{ required: true, message: '请输入当前密码', trigger: 'blur' }],
+    newPassword: [
+      { required: true, message: '请输入新密码', trigger: 'blur' },
+      { min: 6, message: '新密码至少6位', trigger: 'blur' }
+    ],
+    confirmPassword: [
+      {
+        validator: (_rule, value, callback) => {
+          if (!value) {
+            callback(new Error('请确认新密码'))
+            return
+          }
+          if (value !== pwdForm.newPassword) {
+            callback(new Error('两次输入的密码不一致'))
+            return
+          }
+          callback()
+        },
+        trigger: 'blur'
+      }
+    ]
+  })
+
   /**
    * 性别选项
    */
@@ -214,8 +253,30 @@
    */
   const lableList: Array<string> = ['专注设计', '很有想法', '辣~', '大长腿', '川妹子', '海纳百川']
 
+  const loadProfile = async () => {
+    try {
+      const data = await fetchUserProfile()
+      form.realName = data.name || ''
+      form.nikeName = data.nickname || ''
+      form.email = data.email || ''
+      form.mobile = data.phone || ''
+      form.address = data.address || ''
+      form.sex = data.gender != null ? String(data.gender) : ''
+      form.des = data.bio || defaultBio.value
+      userStore.setUserInfo({
+        ...userStore.getUserInfo,
+        fullName: data.name,
+        nickname: data.nickname,
+        email: data.email
+      } as Api.Auth.UserInfo)
+    } catch (error) {
+      console.error(error)
+    }
+  }
+
   onMounted(() => {
     getDate()
+    loadProfile()
   })
 
   /**
@@ -235,15 +296,49 @@
   /**
    * 切换用户信息编辑状态
    */
-  const edit = () => {
-    isEdit.value = !isEdit.value
+  const edit = async () => {
+    if (!isEdit.value) {
+      isEdit.value = true
+      return
+    }
+    if (!ruleFormRef.value) return
+    await ruleFormRef.value.validate(async (valid) => {
+      if (!valid) return
+      await fetchUpdateProfile({
+        name: form.realName,
+        nickname: form.nikeName,
+        email: form.email,
+        phone: form.mobile,
+        address: form.address,
+        gender: form.sex ? Number(form.sex) : undefined,
+        bio: form.des
+      })
+      ElMessage.success('资料已更新')
+      isEdit.value = false
+      loadProfile()
+    })
   }
 
   /**
    * 切换密码编辑状态
    */
-  const editPwd = () => {
-    isEditPwd.value = !isEditPwd.value
+  const editPwd = async () => {
+    if (!isEditPwd.value) {
+      isEditPwd.value = true
+      return
+    }
+    if (!pwdFormRef.value) return
+    await pwdFormRef.value.validate(async (valid) => {
+      if (!valid) return
+      await fetchChangePassword({
+        currentPassword: pwdForm.password,
+        newPassword: pwdForm.newPassword,
+        confirmPassword: pwdForm.confirmPassword
+      })
+      ElMessage.success('密码修改成功')
+      isEditPwd.value = false
+      Object.assign(pwdForm, { password: '', newPassword: '', confirmPassword: '' })
+    })
   }
 </script>
 

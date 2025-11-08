@@ -10,5 +10,7 @@ import java.util.List;
 public interface SysMenuPermissionRepository extends JpaRepository<SysMenuPermission, Long> {
   List<SysMenuPermission> findByMenuId(Long menuId);
   void deleteByMenuId(Long menuId);
+  long countByPermissionId(Long permissionId);
+  void deleteByPermissionId(Long permissionId);
+  void deleteByMenuIdAndPermissionId(Long menuId, Long permissionId);
 }
-

@@ -99,7 +99,8 @@
 </template>
 
 <script setup lang="ts">
-  import AppConfig from '@/config'
+  import { computed, reactive, ref } from 'vue'
+  import { useSystemConfigStore } from '@/store/modules/system-config'
   import { useUserStore } from '@/store/modules/user'
   import { getCssVar } from '@/utils/ui'
   import { useI18n } from 'vue-i18n'
@@ -127,6 +128,7 @@
     roles: string[]
   }
 
+  const systemConfigStore = useSystemConfigStore()
   const accounts = computed<Account[]>(() => [
     {
       key: 'super',
@@ -158,7 +160,7 @@
   const isPassing = ref(false)
   const isClickPass = ref(false)
 
-  const systemName = AppConfig.systemInfo.name
+  const systemName = computed(() => systemConfigStore.brandName)
   const formRef = ref<FormInstance>()
 
   const formData = reactive({
@@ -260,7 +262,7 @@
         type: 'success',
         duration: 2500,
         zIndex: 10000,
-        message: `${t('login.success.message')}, ${systemName}!`
+        message: `${t('login.success.message')}, ${systemName.value}!`
       })
     }, 150)
   }

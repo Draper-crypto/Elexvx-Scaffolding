@@ -71,4 +71,19 @@ public class UserDtos {
   public static class SetUserRolesRequest { public List<Long> roleIds; }
   public static class StatusUpdateRequest { public Integer status; }
   public static class ResetPasswordRequest { public String newPassword; }
+
+  public static class UserProfileUpdateRequest {
+    public String name;
+    public String nickname;
+    public Integer gender;
+    public String email;
+    public String phone;
+    public String address;
+    public String bio;
+  }
+
+  public static class UserChangePasswordRequest {
+    public String currentPassword;
+    public String newPassword;
+  }
 }

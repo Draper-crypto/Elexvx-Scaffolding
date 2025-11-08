@@ -205,4 +205,33 @@ public class UserService {
       }
     }
   }
+
+  @Transactional
+  public UserDetail updateProfile(Long userId, UserProfileUpdateRequest req) {
+    SysUser u = userRepo.findById(userId).orElseThrow(() -> new RuntimeException("User not found"));
+    if (req.name != null) u.setName(req.name);
+    if (req.nickname != null) u.setNickname(req.nickname);
+    if (req.gender != null) u.setGender(req.gender);
+    if (req.email != null) u.setEmail(req.email);
+    if (req.phone != null) u.setPhone(req.phone);
+    if (req.address != null) u.setAddress(req.address);
+    if (req.bio != null) u.setBio(req.bio);
+    u.setUpdatedAt(LocalDateTime.now());
+    userRepo.save(u);
+    return get(userId);
+  }
+
+  @Transactional
+  public void changePassword(Long userId, UserChangePasswordRequest req) {
+    SysUser u = userRepo.findById(userId).orElseThrow(() -> new RuntimeException("User not found"));
+    if (req.currentPassword == null || !passwordEncoder.matches(req.currentPassword, u.getPasswordHash())) {
+      throw new RuntimeException("当前密码错误");
+    }
+    if (req.newPassword == null || req.newPassword.length() < 6) {
+      throw new RuntimeException("新密码长度不能小于6位");
+    }
+    u.setPasswordHash(passwordEncoder.encode(req.newPassword));
+    u.setUpdatedAt(LocalDateTime.now());
+    userRepo.save(u);
+  }
 }

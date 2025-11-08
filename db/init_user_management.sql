@@ -240,3 +240,49 @@ CREATE TABLE IF NOT EXISTS `sys_page` (
 -- Suggested seed data (optional): create base roles/permissions
 -- INSERT statements can be added here when requirements are finalized.
 
+-- -----------------------------------------------------
+-- Table: sys_change_log
+-- 存储系统更新日志
+-- -----------------------------------------------------
+CREATE TABLE IF NOT EXISTS `sys_change_log` (
+  `id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `version` VARCHAR(50) NOT NULL,
+  `title` VARCHAR(255) NOT NULL,
+  `content` LONGTEXT,
+  `release_date` DATE DEFAULT NULL,
+  `remark` VARCHAR(255) DEFAULT NULL,
+  `require_relogin` TINYINT DEFAULT 0,
+  `created_at` DATETIME DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  `created_by` BIGINT UNSIGNED DEFAULT NULL,
+  `updated_by` BIGINT UNSIGNED DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `idx_change_release` (`release_date`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='系统更新日志';
+
+-- -----------------------------------------------------
+-- Table: sys_global_setting
+-- 全局设置（JSON）
+-- -----------------------------------------------------
+CREATE TABLE IF NOT EXISTS `sys_global_setting` (
+  `id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `setting_key` VARCHAR(100) NOT NULL,
+  `setting_value` TEXT,
+  `description` VARCHAR(255) DEFAULT NULL,
+  `created_at` DATETIME DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  `created_by` BIGINT UNSIGNED DEFAULT NULL,
+  `updated_by` BIGINT UNSIGNED DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uk_setting_key` (`setting_key`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='系统全局设置';
+
+-- 默认品牌与水印配置
+INSERT INTO `sys_global_setting` (`setting_key`, `setting_value`, `description`)
+VALUES
+  ('brand.name', JSON_OBJECT('name', 'Art Design Pro'), '品牌配置'),
+  ('ui.watermark', JSON_OBJECT('enabled', TRUE, 'mode', 'username', 'customText', '', 'fontSize', 16), '水印配置')
+ON DUPLICATE KEY UPDATE
+  `setting_value` = VALUES(`setting_value`),
+  `description` = VALUES(`description`);
+

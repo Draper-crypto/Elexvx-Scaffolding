@@ -1,9 +1,9 @@
 <!-- 水印组件 -->
 <template>
-  <div v-if="watermarkVisible" class="layout-watermark" :style="{ zIndex: zIndex }">
+  <div v-if="visibleComputed" class="layout-watermark" :style="{ zIndex: zIndex }">
     <ElWatermark
-      :content="content"
-      :font="{ fontSize: fontSize, color: fontColor }"
+      :content="contentComputed"
+      :font="{ fontSize: fontSizeComputed, color: fontColor }"
       :rotate="rotate"
       :gap="[gapX, gapY]"
       :offset="[offsetX, offsetY]"
@@ -14,13 +14,14 @@
 </template>
 
 <script setup lang="ts">
+  import { computed } from 'vue'
+  import { storeToRefs } from 'pinia'
   import AppConfig from '@/config'
-  import { useSettingStore } from '@/store/modules/setting'
+  import { useSystemConfigStore } from '@/store/modules/system-config'
 
   defineOptions({ name: 'ArtWatermark' })
 
-  const settingStore = useSettingStore()
-  const { watermarkVisible } = storeToRefs(settingStore)
+  const systemConfigStore = useSystemConfigStore()
 
   interface WatermarkProps {
     /** 水印内容 */
@@ -45,8 +46,8 @@
     zIndex?: number
   }
 
-  withDefaults(defineProps<WatermarkProps>(), {
-    content: AppConfig.systemInfo.name,
+  const props = withDefaults(defineProps<WatermarkProps>(), {
+    content: '',
     visible: false,
     fontSize: 16,
     fontColor: 'rgba(128, 128, 128, 0.2)',
@@ -56,6 +57,20 @@
     offsetX: 50,
     offsetY: 50,
     zIndex: 3100
+  })
+
+  const visibleComputed = computed(() => {
+    if (props.visible) return true
+    return systemConfigStore.effectiveWatermarkVisible
+  })
+
+  const contentComputed = computed(() => {
+    if (props.content) return props.content
+    return systemConfigStore.resolvedWatermarkText
+  })
+
+  const fontSizeComputed = computed(() => {
+    return props.fontSize || systemConfigStore.watermark.fontSize
   })
 </script>
 

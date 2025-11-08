@@ -1,8 +1,9 @@
 import { RouteLocationNormalized, RouteRecordRaw } from 'vue-router'
-import AppConfig from '@/config'
 import NProgress from 'nprogress'
 import 'nprogress/nprogress.css'
 import i18n, { $t } from '@/locales'
+import AppConfig from '@/config'
+import { useSystemConfigStore } from '@/store/modules/system-config'
 
 /** 扩展的路由配置类型 */
 export type AppRouteRecordRaw = RouteRecordRaw & {
@@ -28,7 +29,7 @@ export const setPageTitle = (to: RouteLocationNormalized): void => {
   const { title } = to.meta
   if (title) {
     setTimeout(() => {
-      document.title = `${formatMenuTitle(String(title))} - ${AppConfig.systemInfo.name}`
+      document.title = `${formatMenuTitle(String(title))} - ${getBrandName()}`
     }, 150)
   }
 }
@@ -52,4 +53,13 @@ export const formatMenuTitle = (title: string): string => {
     return title
   }
   return ''
+}
+
+function getBrandName(): string {
+  try {
+    const store = useSystemConfigStore()
+    return store.brandName || AppConfig.systemInfo.name
+  } catch {
+    return AppConfig.systemInfo.name
+  }
 }

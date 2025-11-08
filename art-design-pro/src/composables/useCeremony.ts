@@ -5,11 +5,13 @@ import { storeToRefs } from 'pinia'
 import { computed } from 'vue'
 import { mittBus } from '@/utils/sys'
 import { festivalConfigList } from '@/config/festival'
+import { useSystemConfigStore } from '@/store/modules/system-config'
 
 // 节日庆祝相关配置
 export function useCeremony() {
   const settingStore = useSettingStore()
   const { holidayFireworksLoaded, isShowFireworks } = storeToRefs(settingStore)
+  const systemConfigStore = useSystemConfigStore()
 
   // 烟花间隔引用，用于清理
   let fireworksInterval: { pause: () => void } | null = null
@@ -17,7 +19,13 @@ export function useCeremony() {
   // 判断当前日期是否是节日
   const currentFestivalData = computed(() => {
     const currentDate = useDateFormat(new Date(), 'YYYY-MM-DD').value
-    return festivalConfigList.find((item) => item.date === currentDate)
+    const raw = festivalConfigList.find((item) => item.date === currentDate)
+    if (!raw) return undefined
+    const brand = systemConfigStore.brandName
+    return {
+      ...raw,
+      scrollText: raw.scrollText?.replace('{{brand}}', brand)
+    }
   })
 
   // 节日庆祝相关配置

@@ -83,9 +83,10 @@
 </template>
 
 <script setup lang="ts">
-  import AppConfig from '@/config'
+  import { computed, reactive, ref, watch } from 'vue'
   import { useI18n } from 'vue-i18n'
   import type { FormInstance, FormRules } from 'element-plus'
+  import { useSystemConfigStore } from '@/store/modules/system-config'
 
   defineOptions({ name: 'Register' })
 
@@ -104,8 +105,8 @@
   const { t, locale } = useI18n()
   const router = useRouter()
   const formRef = ref<FormInstance>()
-
-  const systemName = AppConfig.systemInfo.name
+  const systemConfigStore = useSystemConfigStore()
+  const systemName = computed(() => systemConfigStore.brandName)
   const loading = ref(false)
   const formKey = ref(0)
 

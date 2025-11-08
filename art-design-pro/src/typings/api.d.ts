@@ -55,6 +55,9 @@ declare namespace Api {
       userName: string
       email: string
       avatar?: string
+      fullName?: string
+      nickname?: string
+      displayName?: string
     }
   }
 
@@ -104,5 +107,105 @@ declare namespace Api {
       Pick<RoleListItem, 'roleId' | 'roleName' | 'roleCode' | 'description' | 'enabled'> &
         Api.Common.CommonSearchParams
     >
+
+    /** 菜单提交数据 */
+    interface MenuSubmitData {
+      id?: number
+      parentId?: number | null
+      menuType: number
+      menuName: string
+      routePath: string
+      componentPath?: string
+      permissionHint?: string
+      icon?: string
+      orderNum?: number
+      externalLink?: string
+      badgeText?: string
+      activePath?: string
+      enabled?: boolean
+      cachePage?: boolean
+      hiddenMenu?: boolean
+      embedded?: boolean
+      showBadge?: boolean
+      affix?: boolean
+      hideTab?: boolean
+      fullScreen?: boolean
+    }
+
+    interface MenuAuthData {
+      id?: number
+      menuId?: number
+      title: string
+      authMark: string
+    }
+  }
+
+  /** 更新日志 */
+  namespace ChangeLog {
+    interface Item {
+      id: number
+      version: string
+      title: string
+      content: string
+      releaseDate?: string
+      remark?: string
+      requireReLogin?: boolean
+      createdAt?: string
+      updatedAt?: string
+    }
+
+    interface ListResponse extends Api.Common.PaginatedResponse<Item> {}
+
+    interface FormData {
+      version: string
+      title: string
+      content: string
+      releaseDate?: string
+      remark?: string
+      requireReLogin?: boolean
+    }
+  }
+
+  /** 用户个人中心 */
+  namespace Profile {
+    interface Detail {
+      id: number
+      username: string
+      name?: string
+      nickname?: string
+      gender?: number
+      email?: string
+      phone?: string
+      avatarUrl?: string
+      address?: string
+      bio?: string
+    }
+
+    interface UpdateRequest extends Partial<Omit<Detail, 'id' | 'username' | 'avatarUrl'>> {}
+
+    interface ChangePasswordRequest {
+      currentPassword: string
+      newPassword: string
+      confirmPassword?: string
+    }
+  }
+
+  /** 系统设置 */
+  namespace SystemSetting {
+    interface BrandSetting {
+      name: string
+    }
+
+    interface WatermarkSetting {
+      enabled: boolean
+      mode: 'username' | 'custom'
+      customText: string
+      fontSize: number
+    }
+
+    interface Response {
+      brand: BrandSetting
+      watermark: WatermarkSetting
+    }
   }
 }

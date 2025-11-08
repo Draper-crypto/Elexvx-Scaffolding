@@ -13,6 +13,8 @@ export interface RouteMeta extends Record<string | number | symbol, unknown> {
   title: string
   /** 路由图标 */
   icon?: string
+  /** 菜单类型 */
+  menuType?: number
   /** 是否显示徽章 */
   showBadge?: boolean
   /** 文本徽章 */
@@ -27,6 +29,8 @@ export interface RouteMeta extends Record<string | number | symbol, unknown> {
   isIframe?: boolean
   /** 是否缓存 */
   keepAlive?: boolean
+  /** 权限提示 */
+  permissionHint?: string
   /** 操作权限 */
   authList?: Array<{
     title: string
@@ -38,6 +42,8 @@ export interface RouteMeta extends Record<string | number | symbol, unknown> {
   roles?: string[]
   /** 是否固定标签页 */
   fixedTab?: boolean
+  /** 排序 */
+  orderNum?: number
   /** 激活菜单路径 */
   activePath?: string
   /** 是否为全屏页面 */
@@ -48,6 +54,8 @@ export interface RouteMeta extends Record<string | number | symbol, unknown> {
   authMark?: string
   /** 父级路径 */
   parentPath?: string
+  /** 使用图标选择器 */
+  useIconPicker?: boolean
 }
 
 /**
@@ -56,6 +64,7 @@ export interface RouteMeta extends Record<string | number | symbol, unknown> {
  */
 export interface AppRouteRecord extends Omit<RouteRecordRaw, 'meta' | 'children' | 'component'> {
   id?: number
+  parentId?: number | null
   meta: RouteMeta
   children?: AppRouteRecord[]
   component?: string | (() => Promise<any>)

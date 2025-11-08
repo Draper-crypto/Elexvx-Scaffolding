@@ -3,7 +3,7 @@
   <div class="login-left-view">
     <div class="logo">
       <ArtLogo class="icon" size="46" />
-      <h1 class="title">{{ AppConfig.systemInfo.name }}</h1>
+      <h1 class="title">{{ systemName }}</h1>
     </div>
 
     <div class="left-img">
@@ -71,7 +71,8 @@
 </template>
 
 <script setup lang="ts">
-  import AppConfig from '@/config'
+  import { computed } from 'vue'
+  import { useSystemConfigStore } from '@/store/modules/system-config'
   import loginIcon from '@imgs/svg/login_icon.svg'
   import { themeAnimation } from '@/utils/theme/animation'
 
@@ -79,6 +80,9 @@
   defineProps<{
     hideContent?: boolean // 是否隐藏内容，只显示 logo
   }>()
+
+  const systemConfigStore = useSystemConfigStore()
+  const systemName = computed(() => systemConfigStore.brandName)
 </script>
 
 <style lang="scss" scoped>

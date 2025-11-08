@@ -25,8 +25,11 @@
   import { Loading } from '@element-plus/icons-vue'
   import type { ButtonType } from 'element-plus'
   import { useThrottleFn } from '@vueuse/core'
+  import { useSystemConfigStore } from '@/store/modules/system-config'
 
   defineOptions({ name: 'ArtExcelExport' })
+  const systemConfigStore = useSystemConfigStore()
+  const brandName = computed(() => systemConfigStore.brandName)
 
   /** 导出数据类型 */
   type ExportValue = string | number | boolean | null | undefined | Date
@@ -257,7 +260,7 @@
         workbook.Props = {
           Title: filename,
           Subject: '数据导出',
-          Author: props.workbookOptions.creator || 'Art Design Pro',
+          Author: props.workbookOptions.creator || brandName.value,
           Manager: props.workbookOptions.lastModifiedBy || '',
           Company: '系统导出',
           Category: '数据',

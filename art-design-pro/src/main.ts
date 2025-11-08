@@ -16,6 +16,7 @@ import '@utils/sys/console.ts'                      // 控制台输出内容
 import { setupGlobDirectives } from './directives'
 import { setupErrorHandle } from './utils/sys/error-handle'
 import { useSettingStore } from './store/modules/setting'
+import { useSystemConfigStore } from './store/modules/system-config'
 import { MenuTypeEnum } from './enums/appEnum'
 
 document.addEventListener(
@@ -26,6 +27,8 @@ document.addEventListener(
 
 const app = createApp(App)
 initStore(app)
+const systemConfigStore = useSystemConfigStore()
+systemConfigStore.loadPublicConfig().catch(() => undefined)
 initRouter(app)
 setupGlobDirectives(app)
 setupErrorHandle(app)

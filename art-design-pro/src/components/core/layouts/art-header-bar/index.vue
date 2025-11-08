@@ -6,7 +6,7 @@
         <!-- 系统信息  -->
         <div class="top-header" @click="toHome" v-if="isTopMenu">
           <ArtLogo class="logo" />
-          <p v-if="width >= 1400">{{ AppConfig.systemInfo.name }}</p>
+          <p v-if="width >= 1400">{{ systemName }}</p>
         </div>
 
         <ArtLogo class="logo2" @click="toHome" />
@@ -192,7 +192,7 @@
   import { useSettingStore } from '@/store/modules/setting'
   import { useUserStore } from '@/store/modules/user'
   import { useMenuStore } from '@/store/modules/menu'
-  import AppConfig from '@/config'
+  import { useSystemConfigStore } from '@/store/modules/system-config'
   import { languageOptions } from '@/locales'
   import { WEB_LINKS } from '@/utils/constants'
   import { mittBus } from '@/utils/sys'
@@ -212,6 +212,7 @@
   const settingStore = useSettingStore()
   const userStore = useUserStore()
   const menuStore = useMenuStore()
+  const systemConfigStore = useSystemConfigStore()
 
   // 顶部栏功能配置
   const {
@@ -231,6 +232,7 @@
 
   const { menuOpen, systemThemeColor, showSettingGuide, menuType, isDark, tabStyle } =
     storeToRefs(settingStore)
+  const systemName = computed(() => systemConfigStore.brandName)
 
   const { language, getUserInfo: userInfo } = storeToRefs(userStore)
   const { menuList } = storeToRefs(menuStore)

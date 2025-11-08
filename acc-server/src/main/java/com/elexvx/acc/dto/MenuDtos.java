@@ -32,6 +32,11 @@ public class MenuDtos {
 
   public static class MenuDetail extends MenuTree {}
 
+  public static class MenuAuthRequest {
+    public String title;
+    public String authMark;
+  }
+
   public static class MenuCreateRequest {
     public Long parentId;
     public Integer menuType;
@@ -58,6 +63,8 @@ public class MenuDtos {
   public static class MenuUpdateRequest extends MenuCreateRequest {}
   public static class BindMenuPermissionsRequest { public List<Long> permissionIds; }
   public static class MenuAuth {
+    public Long id;
+    public Long menuId;
     public String authMark; // 对应权限编码 perm_code
     public String title;    // 权限名称 perm_name
   }

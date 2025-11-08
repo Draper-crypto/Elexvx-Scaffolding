@@ -9,5 +9,5 @@ import java.util.Optional;
 @Repository
 public interface SysPermissionRepository extends JpaRepository<SysPermission, Long> {
   Optional<SysPermission> findByPermCode(String permCode);
+  boolean existsByPermCode(String permCode);
 }
-

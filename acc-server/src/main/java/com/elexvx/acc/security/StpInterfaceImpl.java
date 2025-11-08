@@ -38,7 +38,10 @@ public class StpInterfaceImpl implements StpInterface {
             "sys:user:status","sys:user:resetpwd","sys:user:setroles",
             "sys:role:list","sys:role:read","sys:role:create","sys:role:update","sys:role:delete",
             "sys:role:setmenus","sys:role:setperms",
-            "sys:menu:tree","sys:menu:read","sys:menu:create","sys:menu:update","sys:menu:delete","sys:menu:bindperms"
+            "sys:menu:tree","sys:menu:read","sys:menu:create","sys:menu:update","sys:menu:delete","sys:menu:bindperms",
+            "sys:menu:auth:create","sys:menu:auth:update","sys:menu:auth:delete",
+            "sys:changelog:list","sys:changelog:read","sys:changelog:create","sys:changelog:update","sys:changelog:delete",
+            "sys:setting:read","sys:setting:brand","sys:setting:watermark"
         );
       }
       List<Long> roleIds = urs.stream().map(SysUserRole::getRoleId).collect(Collectors.toList());

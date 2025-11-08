@@ -29,10 +29,11 @@
 </template>
 
 <script setup lang="ts">
-  import AppConfig from '@/config'
+  import { computed } from 'vue'
+  import { useSystemConfigStore } from '@/store/modules/system-config'
   import { WEB_LINKS } from '@/utils/constants'
 
-  const systemName = AppConfig.systemInfo.name
+  const systemName = computed(() => useSystemConfigStore().brandName)
 
   /**
    * 在新标签页中打开指定 URL

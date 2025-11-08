@@ -2,7 +2,7 @@
   <div class="page-content">
     <!-- 基础用法 -->
     <ArtTextScroll
-      text="Art Design Pro 是一款兼具设计美学与高效开发的后台系统 <a target='_blank' href='https://www.artd.pro/docs/'>点击我 </a>访问官方文档"
+      :text="`${brandName} 是一款兼具设计美学与高效开发的后台系统 <a target='_blank' href='https://www.artd.pro/docs/'>点击我 </a>访问官方文档`"
       showClose
     />
 
@@ -31,7 +31,13 @@
 </template>
 
 <script setup lang="ts">
+  import { computed } from 'vue'
+  import { useSystemConfigStore } from '@/store/modules/system-config'
+
   defineOptions({ name: 'WidgetsTextScroll' })
+
+  const systemConfigStore = useSystemConfigStore()
+  const brandName = computed(() => systemConfigStore.brandName)
 
   /**
    * 处理关闭事件
