@@ -15,6 +15,7 @@ import com.elexvx.acc.repo.SysRoleMenuRepository;
 import com.elexvx.acc.repo.SysRolePermissionRepository;
 import com.elexvx.acc.repo.SysRoleRepository;
 import com.elexvx.acc.repo.SysUserRoleRepository;
+import jakarta.annotation.PostConstruct;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -51,6 +52,11 @@ public class MenuService {
     this.roleMenuRepo = roleMenuRepo;
     this.userRoleRepo = userRoleRepo;
     this.roleRepo = roleRepo;
+  }
+
+  @PostConstruct
+  public void initBuiltinMenus() {
+    ensureChangeLogMenuExists();
   }
 
   public List<MenuTree> tree() {
@@ -255,6 +261,37 @@ public class MenuService {
     if (req.hideTab != null) m.setHideTab(fromBool(req.hideTab));
     if (req.fullScreen != null) m.setFullScreen(fromBool(req.fullScreen));
     m.setUpdatedAt(LocalDateTime.now());
+  }
+
+  private void ensureChangeLogMenuExists() {
+    final String routePath = "/change/log";
+    if (menuRepo.findByRoutePath(routePath).isPresent()) {
+      return;
+    }
+    SysMenu menu = new SysMenu();
+    menu.setMenuType(2);
+    menu.setMenuName("更新日志");
+    menu.setRoutePath(routePath);
+    menu.setComponentPath("/change/log");
+    menu.setPermissionHint("sys:changelog:list");
+    menu.setIcon("&#xe712;");
+    menu.setUseIconPicker(0);
+    menu.setOrderNum(99);
+    menu.setExternalLink(null);
+    menu.setBadgeText(null);
+    menu.setActivePath("");
+    menu.setEnabled(1);
+    menu.setCachePage(0);
+    menu.setHiddenMenu(0);
+    menu.setEmbedded(0);
+    menu.setShowBadge(0);
+    menu.setAffix(0);
+    menu.setHideTab(0);
+    menu.setFullScreen(0);
+    LocalDateTime now = LocalDateTime.now();
+    menu.setCreatedAt(now);
+    menu.setUpdatedAt(now);
+    menuRepo.save(menu);
   }
 
   private Boolean toBool(Integer v) { return v != null && v != 0; }

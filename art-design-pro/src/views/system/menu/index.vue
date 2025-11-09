@@ -469,6 +469,24 @@
     }
   }
 
+  const resolveHomePath = (): string => {
+    const storedPath = menuStore.getHomePath()
+    if (typeof storedPath === 'string' && storedPath.trim()) {
+      return storedPath
+    }
+    return '/'
+  }
+
+  const navigateToHome = async (): Promise<void> => {
+    const targetPath = resolveHomePath()
+    if (route.path === targetPath) return
+    try {
+      await router.replace({ path: targetPath })
+    } catch (error) {
+      console.error('鑷姩杞埌棣栭〉澶辫触', error)
+    }
+  }
+
   const handleSubmit = async (formData: MenuFormData): Promise<void> => {
     try {
       const submitType = formData.menuType ?? dialogType.value
@@ -528,6 +546,9 @@
       await reloadNavigations()
       await refreshSidebarMenus()
       await getMenuList()
+      if (submitType === 'menu') {
+        await navigateToHome()
+      }
     } catch (error) {
       console.error(error)
     }

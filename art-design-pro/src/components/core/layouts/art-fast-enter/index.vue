@@ -79,29 +79,34 @@
    * @param routeName 路由名称
    * @param link 外部链接
    */
-  const handleNavigate = (routeName?: string, link?: string): void => {
-    const targetPath = routeName || link
-
-    if (!targetPath) {
-      console.warn('导航配置无效：缺少路由名称或链接')
+  const handleNavigate = (routeName?: string, routePath?: string, link?: string): void => {
+    if (link) {
+      if (link.startsWith('http')) {
+        window.open(link, '_blank')
+      } else {
+        router.push(link)
+      }
+      popoverRef.value?.hide()
       return
     }
 
-    if (targetPath.startsWith('http')) {
-      window.open(targetPath, '_blank')
-    } else {
-      router.push({ name: targetPath })
+    if (routePath) {
+      router.push(routePath)
+      popoverRef.value?.hide()
+      return
     }
 
-    popoverRef.value?.hide()
+    if (routeName) {
+      router.push({ name: routeName })
+      popoverRef.value?.hide()
+      return
+    }
+
+    console.warn('导航配置无效：需至少提供路由或链接')
   }
 
-  /**
-   * 处理应用项点击
-   * @param application 应用配置对象
-   */
   const handleApplicationClick = (application: FastEnterApplication): void => {
-    handleNavigate(application.routeName, application.link)
+    handleNavigate(application.routeName, application.routePath, application.link)
   }
 
   /**
@@ -109,7 +114,7 @@
    * @param quickLink 快速链接配置对象
    */
   const handleQuickLinkClick = (quickLink: FastEnterQuickLink): void => {
-    handleNavigate(quickLink.routeName, quickLink.link)
+    handleNavigate(quickLink.routeName, quickLink.routePath, quickLink.link)
   }
 </script>
 

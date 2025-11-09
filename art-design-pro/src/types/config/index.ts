@@ -56,6 +56,8 @@ export interface FastEnterBaseItem {
   order?: number
   /** 路由名称 */
   routeName?: string
+  /** 璺敱璺緞 */
+  routePath?: string
   /** 外部链接 */
   link?: string
 }

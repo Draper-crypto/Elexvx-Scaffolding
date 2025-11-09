@@ -17,7 +17,8 @@ const fastEnterConfig: FastEnterConfig = {
       iconColor: '#377dff',
       enabled: true,
       order: 1,
-      routeName: 'Console'
+      routeName: 'Console',
+      routePath: '/dashboard/console'
     },
     {
       name: '分析页',
@@ -35,7 +36,8 @@ const fastEnterConfig: FastEnterConfig = {
       iconColor: '#7A7FFF',
       enabled: true,
       order: 3,
-      routeName: 'Fireworks'
+      routeName: 'Fireworks',
+      routePath: '/widgets/fireworks'
     },
     {
       name: '聊天',
@@ -44,7 +46,8 @@ const fastEnterConfig: FastEnterConfig = {
       iconColor: '#13DEB9',
       enabled: true,
       order: 4,
-      routeName: 'Chat'
+      routeName: 'Chat',
+      routePath: '/template/chat'
     },
     {
       name: '官方文档',
@@ -71,7 +74,8 @@ const fastEnterConfig: FastEnterConfig = {
       iconColor: '#38C0FC',
       enabled: true,
       order: 7,
-      routeName: 'ChangeLog'
+      routeName: 'ChangeLog',
+      routePath: '/change/log'
     },
     {
       name: '哔哩哔哩',
@@ -89,37 +93,43 @@ const fastEnterConfig: FastEnterConfig = {
       name: '登录',
       enabled: true,
       order: 1,
-      routeName: 'Login'
+      routeName: 'Login',
+      routePath: '/auth/login'
     },
     {
       name: '注册',
       enabled: true,
       order: 2,
-      routeName: 'Register'
+      routeName: 'Register',
+      routePath: '/auth/register'
     },
     {
       name: '忘记密码',
       enabled: true,
       order: 3,
-      routeName: 'ForgetPassword'
+      routeName: 'ForgetPassword',
+      routePath: '/auth/forget-password'
     },
     {
       name: '定价',
       enabled: true,
       order: 4,
-      routeName: 'Pricing'
+      routeName: 'Pricing',
+      routePath: '/template/pricing'
     },
     {
       name: '个人中心',
       enabled: true,
       order: 5,
-      routeName: 'UserCenter'
+      routeName: 'UserCenter',
+      routePath: '/system/user-center'
     },
     {
       name: '留言管理',
       enabled: true,
       order: 6,
-      routeName: 'ArticleComment'
+      routeName: 'ArticleComment',
+      routePath: '/article/comment'
     }
   ]
 }
