@@ -1,11 +1,14 @@
 <!-- 系统logo -->
 <template>
   <div class="art-logo">
-    <img :style="logoStyle" src="@imgs/common/logo.webp" alt="logo" />
+    <img :style="logoStyle" :src="logoSrc" alt="logo" />
   </div>
 </template>
 
 <script setup lang="ts">
+  import { computed } from 'vue'
+  import { useSystemConfigStore } from '@/store/modules/system-config'
+
   defineOptions({ name: 'ArtLogo' })
 
   interface Props {
@@ -17,6 +20,8 @@
     size: 36
   })
 
+  const systemConfigStore = useSystemConfigStore()
+  const logoSrc = computed(() => systemConfigStore.logoUrl || '@imgs/common/logo.webp')
   const logoStyle = computed(() => ({ width: `${props.size}px` }))
 </script>
 

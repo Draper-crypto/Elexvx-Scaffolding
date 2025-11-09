@@ -19,3 +19,13 @@ export function fetchChangePassword(data: Api.Profile.ChangePasswordRequest) {
     data
   })
 }
+
+export function uploadProfileAvatar(file: File) {
+  const formData = new FormData()
+  formData.append('file', file)
+  return request.post<string>({
+    url: '/api/profile/avatar',
+    data: formData,
+    showSuccessMessage: false
+  })
+}

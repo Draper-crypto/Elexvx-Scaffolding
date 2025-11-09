@@ -4,6 +4,7 @@
  */
 import { MenuThemeEnum, MenuTypeEnum, SystemThemeEnum } from '@/enums/appEnum'
 import { SystemConfig } from '@/types/config'
+import defaultLogo from '@imgs/common/logo.webp'
 import { configImages } from './assets/images'
 import fastEnterConfig from './fastEnter'
 import { headerBarConfig } from './headerBar'
@@ -11,7 +12,8 @@ import { headerBarConfig } from './headerBar'
 const appConfig: SystemConfig = {
   // 系统信息
   systemInfo: {
-    name: 'Art Design Pro' // 系统名称
+    name: 'Art Design Pro', // 系统名称
+    logo: defaultLogo
   },
   // 系统主题
   systemThemeStyles: {

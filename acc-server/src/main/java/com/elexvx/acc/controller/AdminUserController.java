@@ -35,7 +35,7 @@ public class AdminUserController {
 
   @GetMapping("/{id}")
   @SaCheckPermission("sys:user:read")
-  public ResponseEntity<ApiResponse<UserDetail>> detail(@PathVariable Long id) {
+  public ResponseEntity<ApiResponse<UserDetail>> detail(@PathVariable("id") Long id) {
     return ResponseEntity.ok(ApiResponse.success(userService.get(id)));
   }
 
@@ -47,34 +47,34 @@ public class AdminUserController {
 
   @PutMapping("/{id}")
   @SaCheckPermission("sys:user:update")
-  public ResponseEntity<ApiResponse<UserDetail>> update(@PathVariable Long id, @RequestBody UserUpdateRequest req) {
+  public ResponseEntity<ApiResponse<UserDetail>> update(@PathVariable("id") Long id, @RequestBody UserUpdateRequest req) {
     return ResponseEntity.ok(ApiResponse.success(userService.update(id, req)));
   }
 
   @DeleteMapping("/{id}")
   @SaCheckPermission("sys:user:delete")
-  public ResponseEntity<ApiResponse<Object>> delete(@PathVariable Long id) {
+  public ResponseEntity<ApiResponse<Object>> delete(@PathVariable("id") Long id) {
     userService.delete(id);
     return ResponseEntity.ok(ApiResponse.success(null));
   }
 
   @PutMapping("/{id}/status")
   @SaCheckPermission("sys:user:status")
-  public ResponseEntity<ApiResponse<Object>> updateStatus(@PathVariable Long id, @RequestBody StatusUpdateRequest req) {
+  public ResponseEntity<ApiResponse<Object>> updateStatus(@PathVariable("id") Long id, @RequestBody StatusUpdateRequest req) {
     userService.updateStatus(id, req);
     return ResponseEntity.ok(ApiResponse.success(null));
   }
 
   @PutMapping("/{id}/reset-password")
   @SaCheckPermission("sys:user:resetpwd")
-  public ResponseEntity<ApiResponse<Object>> resetPassword(@PathVariable Long id, @RequestBody ResetPasswordRequest req) {
+  public ResponseEntity<ApiResponse<Object>> resetPassword(@PathVariable("id") Long id, @RequestBody ResetPasswordRequest req) {
     userService.resetPassword(id, req);
     return ResponseEntity.ok(ApiResponse.success(null));
   }
 
   @PutMapping("/{id}/roles")
   @SaCheckPermission("sys:user:setroles")
-  public ResponseEntity<ApiResponse<Object>> setRoles(@PathVariable Long id, @RequestBody SetUserRolesRequest req) {
+  public ResponseEntity<ApiResponse<Object>> setRoles(@PathVariable("id") Long id, @RequestBody SetUserRolesRequest req) {
     userService.setRoles(id, req);
     return ResponseEntity.ok(ApiResponse.success(null));
   }

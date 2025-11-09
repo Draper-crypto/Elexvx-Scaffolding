@@ -138,12 +138,12 @@
             popper-style="border: 1px solid var(--art-border-dashed-color); border-radius: calc(var(--custom-radius) / 2 + 4px); padding: 5px 16px; 5px 16px;"
           >
             <template #reference>
-              <img class="cover" src="@imgs/user/avatar.webp" alt="avatar" />
+              <img class="cover" :src="avatarSrc" alt="avatar" />
             </template>
             <template #default>
               <div class="user-menu-box">
                 <div class="user-head">
-                  <img class="cover" src="@imgs/user/avatar.webp" style="float: left" />
+                  <img class="cover" :src="avatarSrc" style="float: left" />
                   <div class="user-wrap">
                     <span class="name">{{ userInfo.userName }}</span>
                     <span class="email">{{ userInfo.email }}</span>
@@ -153,14 +153,6 @@
                   <li @click="goPage('/system/user-center')">
                     <i class="menu-icon iconfont-sys">&#xe734;</i>
                     <span class="menu-txt">{{ $t('topBar.user.userCenter') }}</span>
-                  </li>
-                  <li @click="toDocs()">
-                    <i class="menu-icon iconfont-sys" style="font-size: 15px">&#xe828;</i>
-                    <span class="menu-txt">{{ $t('topBar.user.docs') }}</span>
-                  </li>
-                  <li @click="toGithub()">
-                    <i class="menu-icon iconfont-sys">&#xe8d6;</i>
-                    <span class="menu-txt">{{ $t('topBar.user.github') }}</span>
                   </li>
                   <li @click="lockScreen()">
                     <i class="menu-icon iconfont-sys">&#xe817;</i>
@@ -184,6 +176,9 @@
 </template>
 
 <script setup lang="ts">
+  import defaultAvatar from '@imgs/user/avatar.webp'
+  import { computed, ref, onMounted, onUnmounted } from 'vue'
+  import { storeToRefs } from 'pinia'
   import { useI18n } from 'vue-i18n'
   import { useRouter } from 'vue-router'
   import { ElMessageBox } from 'element-plus'
@@ -194,7 +189,6 @@
   import { useMenuStore } from '@/store/modules/menu'
   import { useSystemConfigStore } from '@/store/modules/system-config'
   import { languageOptions } from '@/locales'
-  import { WEB_LINKS } from '@/utils/constants'
   import { mittBus } from '@/utils/sys'
   import { themeAnimation } from '@/utils/theme/animation'
   import { useCommon } from '@/composables/useCommon'
@@ -235,6 +229,7 @@
   const systemName = computed(() => systemConfigStore.brandName)
 
   const { language, getUserInfo: userInfo } = storeToRefs(userStore)
+  const avatarSrc = computed(() => userInfo.value.avatar || defaultAvatar)
   const { menuList } = storeToRefs(menuStore)
 
   const showNotice = ref(false)
@@ -278,20 +273,6 @@
    */
   const goPage = (path: string): void => {
     router.push(path)
-  }
-
-  /**
-   * 打开文档页面
-   */
-  const toDocs = (): void => {
-    window.open(WEB_LINKS.DOCS)
-  }
-
-  /**
-   * 打开 GitHub 页面
-   */
-  const toGithub = (): void => {
-    window.open(WEB_LINKS.GITHUB)
   }
 
   /**

@@ -64,6 +64,7 @@
   import RoleEditDialog from './modules/role-edit-dialog.vue'
   import RolePermissionDialog from './modules/role-permission-dialog.vue'
   import { ElTag, ElMessageBox } from 'element-plus'
+  import { ROLE_OPTION_CACHE_KEY } from '@/constants/cacheKeys'
 
   defineOptions({ name: 'Role' })
 
@@ -239,6 +240,27 @@
         ElMessage.info('已取消删除')
       })
   }
+
+  watch(
+    data,
+    (rows) => {
+      if (!Array.isArray(rows) || rows.length === 0) return
+      try {
+        const payload = rows
+          .filter((item) => item?.roleCode)
+          .map((item) => ({
+            code: item.roleCode,
+            name: item.roleName || item.roleCode
+          }))
+        if (payload.length) {
+          localStorage.setItem(ROLE_OPTION_CACHE_KEY, JSON.stringify(payload))
+        }
+      } catch (error) {
+        console.error('[Role] 缓存角色列表失败', error)
+      }
+    },
+    { deep: true }
+  )
 </script>
 
 <style lang="scss" scoped>

@@ -8,8 +8,35 @@
             <ElFormItem label="系统名称">
               <ElInput v-model.trim="brandForm.name" placeholder="请输入系统名称" />
             </ElFormItem>
+            <ElFormItem label="Logo文件">
+              <ElUpload
+                class="logo-upload"
+                :accept="'image/*'"
+                :before-upload="handleLogoUpload"
+                :show-file-list="false"
+              >
+                <ElButton type="primary">
+                  <ElIcon>
+                    <UploadFilled />
+                  </ElIcon>
+                  <span>选择文件</span>
+                </ElButton>
+              </ElUpload>
+            </ElFormItem>
+            <ElFormItem label="Logo预览">
+              <div class="logo-preview">
+                <ElImage
+                  class="logo-image"
+                  v-if="brandForm.logoUrl"
+                  :src="brandForm.logoUrl"
+                  fit="contain"
+                  preview-teleported
+                />
+                <span v-else>使用默认logo</span>
+              </div>
+            </ElFormItem>
             <ElFormItem>
-              <ElButton type="primary" :loading="brandSaving" @click="saveBrand" v-ripple>
+              <ElButton type="primary" :loading="brandSaving" @click="saveBrand" v-ripple style="width: 120px;">
                 保存品牌
               </ElButton>
             </ElFormItem>
@@ -49,17 +76,23 @@
 </template>
 
 <script setup lang="ts">
+  import AppConfig from '@/config'
+  import type { UploadRawFile } from 'element-plus'
+  import { uploadBrandLogo } from '@/api/system-setting'
   import { onMounted, reactive, ref, watch } from 'vue'
   import { ElMessage } from 'element-plus'
   import { fetchSystemSettings, fetchUpdateBrandSetting, fetchUpdateWatermarkSetting } from '@/api/system-setting'
   import { useSystemConfigStore } from '@/store/modules/system-config'
+  import { UploadFilled } from '@element-plus/icons-vue'
 
   defineOptions({ name: 'SystemSettings' })
 
   const systemConfigStore = useSystemConfigStore()
 
+  const defaultLogo = AppConfig.systemInfo.logo || ''
   const brandForm = reactive({
-    name: systemConfigStore.brandName
+    name: systemConfigStore.brandName,
+    logoUrl: systemConfigStore.logoUrl || defaultLogo
   })
   const watermarkForm = reactive({
     enabled: systemConfigStore.watermark.enabled,
@@ -80,6 +113,9 @@
       watermarkForm.customText = data.watermark?.customText || ''
       watermarkForm.fontSize = data.watermark?.fontSize || 16
       systemConfigStore.brandName = brandForm.name
+      const fetchedLogo = data.brand?.logoUrl?.trim()
+      systemConfigStore.logoUrl = fetchedLogo ? fetchedLogo : defaultLogo
+      brandForm.logoUrl = fetchedLogo ? fetchedLogo : defaultLogo
       systemConfigStore.watermark.enabled = watermarkForm.enabled
       systemConfigStore.watermark.mode = watermarkForm.mode
       systemConfigStore.watermark.customText = watermarkForm.customText
@@ -96,9 +132,14 @@
     }
     brandSaving.value = true
     try {
-      const data = await fetchUpdateBrandSetting({ name: brandForm.name })
+      const data = await fetchUpdateBrandSetting({
+        name: brandForm.name,
+        logoUrl: brandForm.logoUrl
+      })
       systemConfigStore.brandName = data.name
       ElMessage.success('品牌设置已更新')
+      const updatedLogo = data.logoUrl?.trim()
+      systemConfigStore.logoUrl = updatedLogo ? updatedLogo : defaultLogo
     } finally {
       brandSaving.value = false
     }
@@ -135,6 +176,25 @@
   )
 
   watch(
+    () => systemConfigStore.logoUrl,
+    (val) => {
+      brandForm.logoUrl = val || defaultLogo
+    }
+  )
+
+  const handleLogoUpload = async (file: UploadRawFile) => {
+    const rawFile = file as File
+    if (!rawFile) return false
+    try {
+      const data = await uploadBrandLogo(rawFile as File)
+      brandForm.logoUrl = data.url || ''
+    } catch (error) {
+      // 处理错误即可，UI 会显示失败
+    }
+    return false
+  }
+
+  watch(
     () => [
       systemConfigStore.watermark.enabled,
       systemConfigStore.watermark.mode,
@@ -161,6 +221,28 @@
     }
     .el-form {
       max-width: 420px;
+    }
+    .logo-preview {
+      display: flex;
+      align-items: center;
+      min-height: 80px;
+      .logo-image {
+        max-height: 80px;
+        max-width: 240px;
+        border-radius: 6px;
+        box-shadow: 0 0 8px rgba(0, 0, 0, 0.05);
+      }
+    }
+    .logo-upload {
+      width: 120px;
+      .el-button {
+        width: 100%;
+        height: 36px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 6px;
+      }
     }
   }
 </style>

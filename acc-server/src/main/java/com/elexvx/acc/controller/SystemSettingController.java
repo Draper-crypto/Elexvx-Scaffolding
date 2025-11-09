@@ -4,19 +4,24 @@ import cn.dev33.satoken.annotation.SaCheckPermission;
 import cn.dev33.satoken.stp.StpUtil;
 import com.elexvx.acc.common.ApiResponse;
 import com.elexvx.acc.dto.SystemSettingDtos.*;
+import com.elexvx.acc.service.FileStorageService;
 import com.elexvx.acc.service.SystemSettingService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 @RestController
 @RequestMapping("/api/system/settings")
 @Validated
 public class SystemSettingController {
   private final SystemSettingService systemSettingService;
+  private final FileStorageService fileStorageService;
 
-  public SystemSettingController(SystemSettingService systemSettingService) {
+  public SystemSettingController(
+      SystemSettingService systemSettingService, FileStorageService fileStorageService) {
     this.systemSettingService = systemSettingService;
+    this.fileStorageService = fileStorageService;
   }
 
   @GetMapping("/public")
@@ -35,6 +40,13 @@ public class SystemSettingController {
   public ResponseEntity<ApiResponse<BrandSetting>> updateBrand(@RequestBody UpdateBrandRequest req) {
     Long operator = StpUtil.getLoginIdAsLong();
     return ResponseEntity.ok(ApiResponse.success(systemSettingService.updateBrand(req, operator)));
+  }
+
+  @PostMapping("/brand/logo")
+  @SaCheckPermission("sys:setting:brand")
+  public ResponseEntity<ApiResponse<String>> uploadBrandLogo(@RequestParam("file") MultipartFile file) {
+    String url = fileStorageService.store(file, "brand");
+    return ResponseEntity.ok(ApiResponse.success(url));
   }
 
   @PutMapping("/watermark")

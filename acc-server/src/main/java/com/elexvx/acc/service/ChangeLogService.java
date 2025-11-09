@@ -83,9 +83,9 @@ public class ChangeLogService {
     entity.setVersion(req.version);
     entity.setTitle(req.title);
     entity.setContent(req.content);
+    entity.setSummary(req.summary);
     entity.setReleaseDate(req.releaseDate);
     entity.setRemark(req.remark);
-    entity.setRequireReLogin(Boolean.TRUE.equals(req.requireReLogin) ? 1 : 0);
     LocalDateTime now = LocalDateTime.now();
     if (isCreate) {
       entity.setCreatedAt(now);
@@ -101,11 +101,17 @@ public class ChangeLogService {
     item.version = entity.getVersion();
     item.title = entity.getTitle();
     item.content = entity.getContent();
+    item.summary = entity.getSummary();
     item.releaseDate = entity.getReleaseDate();
     item.remark = entity.getRemark();
-    item.requireReLogin = entity.getRequireReLogin() != null && entity.getRequireReLogin() == 1;
     item.createdAt = entity.getCreatedAt();
     item.updatedAt = entity.getUpdatedAt();
     return item;
+  }
+
+  public ChangeLogItem latest() {
+    return changeLogRepository.findTopByOrderByReleaseDateDescCreatedAtDesc()
+        .map(this::toItem)
+        .orElse(null);
   }
 }

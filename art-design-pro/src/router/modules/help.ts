@@ -8,7 +8,7 @@ export const helpRoutes: AppRouteRecord[] = [
     component: '/change/log',
     meta: {
       title: 'menus.plan.log',
-      showTextBadge: `v${__APP_VERSION__}`,
+      showTextBadge: '',
       icon: '&#xe712;',
       keepAlive: false
     }

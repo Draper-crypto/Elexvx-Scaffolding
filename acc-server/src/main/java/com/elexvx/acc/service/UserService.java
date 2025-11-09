@@ -222,6 +222,15 @@ public class UserService {
   }
 
   @Transactional
+  public String updateAvatar(Long userId, String avatarUrl) {
+    SysUser u = userRepo.findById(userId).orElseThrow(() -> new RuntimeException("User not found"));
+    u.setAvatarUrl(avatarUrl);
+    u.setUpdatedAt(LocalDateTime.now());
+    userRepo.save(u);
+    return avatarUrl;
+  }
+
+  @Transactional
   public void changePassword(Long userId, UserChangePasswordRequest req) {
     SysUser u = userRepo.findById(userId).orElseThrow(() -> new RuntimeException("User not found"));
     if (req.currentPassword == null || !passwordEncoder.matches(req.currentPassword, u.getPasswordHash())) {

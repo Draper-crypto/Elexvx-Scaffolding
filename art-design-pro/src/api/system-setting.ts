@@ -25,3 +25,13 @@ export function fetchUpdateWatermarkSetting(data: Api.SystemSetting.WatermarkSet
     data
   })
 }
+
+export function uploadBrandLogo(file: File) {
+  const formData = new FormData()
+  formData.append('file', file)
+  return request.post<{ url: string }>({
+    url: '/api/system/settings/brand/logo',
+    data: formData,
+    showSuccessMessage: false
+  })
+}

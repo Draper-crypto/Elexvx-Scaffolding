@@ -13,6 +13,12 @@ export function fetchPublicChangeLogs() {
   })
 }
 
+export function fetchLatestChangeLog() {
+  return request.get<Api.ChangeLog.Item | null>({
+    url: '/api/change-logs/latest'
+  })
+}
+
 export function fetchCreateChangeLog(data: Api.ChangeLog.FormData) {
   return request.post<Api.ChangeLog.Item>({
     url: '/api/change-logs',

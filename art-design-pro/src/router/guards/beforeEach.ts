@@ -1,4 +1,4 @@
-import type { Router, RouteLocationNormalized, NavigationGuardNext } from 'vue-router'
+﻿import type { Router, RouteLocationNormalized, NavigationGuardNext } from 'vue-router'
 import { ref, nextTick } from 'vue'
 import NProgress from 'nprogress'
 import { useSettingStore } from '@/store/modules/setting'
@@ -7,6 +7,7 @@ import { useMenuStore } from '@/store/modules/menu'
 import { setWorktab } from '@/utils/navigation'
 import { setPageTitle } from '../utils/utils'
 import { fetchGetMenuList } from '@/api/system-manage'
+import { fetchLatestChangeLog } from '@/api/change-log'
 import { registerDynamicRoutes } from '../utils/registerRoutes'
 import { AppRouteRecord } from '@/types/router'
 import { RoutesAlias } from '../routesAlias'
@@ -23,11 +24,13 @@ import { HttpError, isHttpError } from '@/utils/http/error'
 // 是否已注册动态路由
 const isRouteRegistered = ref(false)
 
-// 跟踪是否需要关闭 loading
+// 璺熻釜鏄惁闇€瑕佸叧闂?loading
 const pendingLoading = ref(false)
+let versionBadgeLoaded = false
+let cachedVersionBadge: string | null = null
 
 /**
- * 设置路由全局前置守卫
+ * 璁剧疆璺敱鍏ㄥ眬鍓嶇疆瀹堝崼
  */
 export function setupBeforeEachGuard(router: Router): void {
   router.beforeEach(
@@ -39,28 +42,28 @@ export function setupBeforeEachGuard(router: Router): void {
       try {
         await handleRouteGuard(to, from, next, router)
       } catch (error) {
-        console.error('路由守卫处理失败:', error)
+        console.error('璺敱瀹堝崼澶勭悊澶辫触:', error)
         next({ name: 'Exception500' })
       }
     }
   )
 
-  // 设置后置守卫以关闭 loading 和进度条
+  // 璁剧疆鍚庣疆瀹堝崼浠ュ叧闂?loading 鍜岃繘搴︽潯
   setupAfterEachGuard(router)
 }
 
 /**
- * 设置路由全局后置守卫
+ * 璁剧疆璺敱鍏ㄥ眬鍚庣疆瀹堝崼
  */
 function setupAfterEachGuard(router: Router): void {
   router.afterEach(() => {
-    // 关闭进度条
+    // 鍏抽棴杩涘害鏉?
     const settingStore = useSettingStore()
     if (settingStore.showNprogress) {
       NProgress.done()
     }
 
-    // 关闭 loading 效果
+    // 鍏抽棴 loading 鏁堟灉
     if (pendingLoading.value) {
       nextTick(() => {
         loadingService.hideLoading()
@@ -71,7 +74,7 @@ function setupAfterEachGuard(router: Router): void {
 }
 
 /**
- * 处理路由守卫逻辑
+ * 澶勭悊璺敱瀹堝崼閫昏緫
  */
 async function handleRouteGuard(
   to: RouteLocationNormalized,
@@ -82,28 +85,28 @@ async function handleRouteGuard(
   const settingStore = useSettingStore()
   const userStore = useUserStore()
 
-  // 处理进度条
+  // 澶勭悊杩涘害鏉?
   if (settingStore.showNprogress) {
     NProgress.start()
   }
 
-  // 处理登录状态
+  // 澶勭悊鐧诲綍鐘舵€?
   if (!(await handleLoginStatus(to, userStore, next))) {
     return
   }
 
-  // 处理动态路由注册
+  // 澶勭悊鍔ㄦ€佽矾鐢辨敞鍐?
   if (!isRouteRegistered.value && userStore.isLogin) {
     await handleDynamicRoutes(to, from, next, router)
     return
   }
 
-  // 处理根路径跳转到首页
+  // 澶勭悊鏍硅矾寰勮烦杞埌棣栭〉
   if (userStore.isLogin && isRouteRegistered.value && handleRootPathRedirect(to, next)) {
     return
   }
 
-  // 处理已知的匹配路由
+  // 澶勭悊宸茬煡鐨勫尮閰嶈矾鐢?
   if (to.matched.length > 0) {
     setWorktab(to)
     setPageTitle(to)
@@ -111,19 +114,18 @@ async function handleRouteGuard(
     return
   }
 
-  // 未匹配到路由，跳转到 404
+  // 鏈尮閰嶅埌璺敱锛岃烦杞埌 404
   next({ name: 'Exception404' })
 }
 
 /**
- * 处理登录状态
- */
+ * 澶勭悊鐧诲綍鐘舵€? */
 async function handleLoginStatus(
   to: RouteLocationNormalized,
   userStore: ReturnType<typeof useUserStore>,
   next: NavigationGuardNext
 ): Promise<boolean> {
-  // 检查是否为静态路由（通过路由 name 判断）
+  // 妫€鏌ユ槸鍚︿负闈欐€佽矾鐢憋紙閫氳繃璺敱 name 鍒ゆ柇锛?
   const isStaticRoute = isRouteInStaticRoutes(to.path)
 
   if (!userStore.isLogin && to.path !== RoutesAlias.Login && !isStaticRoute) {
@@ -135,12 +137,11 @@ async function handleLoginStatus(
 }
 
 /**
- * 检查路由是否为静态路由
- */
+ * 妫€鏌ヨ矾鐢辨槸鍚︿负闈欐€佽矾鐢? */
 function isRouteInStaticRoutes(path: string): boolean {
   const checkRoute = (routes: any[], targetPath: string): boolean => {
     return routes.some((route) => {
-      // 处理动态路由参数匹配
+      // 澶勭悊鍔ㄦ€佽矾鐢卞弬鏁板尮閰?
       const routePath = route.path
       const pattern = routePath.replace(/:[^/]+/g, '[^/]+').replace(/\*/g, '.*')
       const regex = new RegExp(`^${pattern}$`)
@@ -159,26 +160,25 @@ function isRouteInStaticRoutes(path: string): boolean {
 }
 
 /**
- * 处理动态路由注册
- */
+ * 澶勭悊鍔ㄦ€佽矾鐢辨敞鍐? */
 async function handleDynamicRoutes(
   to: RouteLocationNormalized,
   from: RouteLocationNormalized,
   next: NavigationGuardNext,
   router: Router
 ): Promise<void> {
-  // 显示 loading 并标记 pending
+  // 鏄剧ず loading 骞舵爣璁?pending
   pendingLoading.value = true
   loadingService.showLoading()
 
   try {
-    // 获取用户信息
+    // 鑾峰彇鐢ㄦ埛淇℃伅
     await fetchUserInfoIfNeeded(from)
 
-    // 获取菜单数据并注册路由
+    // 鑾峰彇鑿滃崟鏁版嵁骞舵敞鍐岃矾鐢?
     await getMenuData(router)
 
-    // 处理根路径跳转
+    // 澶勭悊鏍硅矾寰勮烦杞?
     if (handleRootPathRedirect(to, next)) {
       return
     }
@@ -190,21 +190,21 @@ async function handleDynamicRoutes(
       replace: true
     })
   } catch (error) {
-    console.error('动态路由注册失败:', error)
-    // 401 错误：axios 拦截器已处理退出登录，取消当前导航即可
+    console.error('鍔ㄦ€佽矾鐢辨敞鍐屽け璐?', error)
+    // 401 閿欒锛歛xios 鎷︽埅鍣ㄥ凡澶勭悊閫€鍑虹櫥褰曪紝鍙栨秷褰撳墠瀵艰埅鍗冲彲
     if (isUnauthorizedError(error)) {
       next(false)
       return
     }
 
-    // 其他错误：标记路由已注册（避免无限重试）
+    // 鍏朵粬閿欒锛氭爣璁拌矾鐢卞凡娉ㄥ唽锛堥伩鍏嶆棤闄愰噸璇曪級
     isRouteRegistered.value = true
     next({ name: 'Exception500' })
   }
 }
 
 /**
- * 获取菜单数据
+ * 鑾峰彇鑿滃崟鏁版嵁
  */
 async function getMenuData(router: Router): Promise<void> {
   if (useCommon().isFrontendMode.value) {
@@ -215,45 +215,95 @@ async function getMenuData(router: Router): Promise<void> {
 }
 
 /**
- * 处理前端控制模式的菜单逻辑
+ * 澶勭悊鍓嶇鎺у埗妯″紡鐨勮彍鍗曢€昏緫
  */
 async function processFrontendMenu(router: Router): Promise<void> {
   const menuList = asyncRoutes.map((route) => menuDataToRouter(route))
   const userStore = useUserStore()
   const roles = userStore.info.roles ?? []
 
-  // 如果没有角色信息（前端模式下可能未获取到用户信息），则不做过滤，直接使用完整菜单
+  // 濡傛灉娌℃湁瑙掕壊淇℃伅锛堝墠绔ā寮忎笅鍙兘鏈幏鍙栧埌鐢ㄦ埛淇℃伅锛夛紝鍒欎笉鍋氳繃婊わ紝鐩存帴浣跨敤瀹屾暣鑿滃崟
   const filteredMenuList = roles.length > 0 ? filterMenuByRoles(menuList, roles) : menuList
 
+  await applyLatestVersionBadge(filteredMenuList)
   await registerAndStoreMenu(router, filteredMenuList)
 }
 
 /**
- * 处理后端控制模式的菜单逻辑
+ * 澶勭悊鍚庣鎺у埗妯″紡鐨勮彍鍗曢€昏緫
  */
 async function processBackendMenu(router: Router): Promise<void> {
   try {
-    const list = await fetchGetMenuList()
+    const list = await fetchGetMenuList('self')
     let menuList = list.map((route) => menuDataToRouter(route))
     // 后端为空时，回退到前端静态菜单
     if (!isValidMenuList(menuList)) {
       menuList = asyncRoutes.map((route) => menuDataToRouter(route))
     }
+    await applyLatestVersionBadge(menuList)
     await registerAndStoreMenu(router, menuList)
   } catch (e) {
     // 接口失败时回退到前端静态菜单
     const menuList = asyncRoutes.map((route) => menuDataToRouter(route))
+    await applyLatestVersionBadge(menuList)
     await registerAndStoreMenu(router, menuList)
   }
 }
 
 /**
- * 递归过滤空菜单项
+ * 閫掑綊杩囨护绌鸿彍鍗曢」
  */
+async function ensureLatestVersionBadge(): Promise<string | null> {
+  if (versionBadgeLoaded) {
+    return cachedVersionBadge
+  }
+  try {
+    const latest = await fetchLatestChangeLog()
+    cachedVersionBadge = latest?.version ? latest.version : null
+  } catch (error) {
+    console.warn('获取最新版本号失败', error)
+    cachedVersionBadge = null
+  } finally {
+    versionBadgeLoaded = true
+  }
+  return cachedVersionBadge
+}
+
+async function applyLatestVersionBadge(menuList: AppRouteRecord[]): Promise<void> {
+  if (!Array.isArray(menuList) || menuList.length === 0) return
+  const version = await ensureLatestVersionBadge()
+  if (!version) return
+  const normalized = version.startsWith('v') ? version : `v${version}`
+  const target = findMenuNode(menuList, (node) => {
+    return node.path === '/change/log' || node.component === '/change/log' || node.name === 'ChangeLog'
+  })
+  if (target) {
+    target.meta = target.meta || {}
+    target.meta.showTextBadge = normalized
+  }
+}
+
+function findMenuNode(
+  nodes: AppRouteRecord[],
+  predicate: (node: AppRouteRecord) => boolean
+): AppRouteRecord | null {
+  for (const node of nodes) {
+    if (predicate(node)) {
+      return node
+    }
+    if (node.children?.length) {
+      const child = findMenuNode(node.children, predicate)
+      if (child) {
+        return child
+      }
+    }
+  }
+  return null
+}
 function filterEmptyMenus(menuList: AppRouteRecord[]): AppRouteRecord[] {
   return menuList
     .map((item) => {
-      // 如果有子菜单，先递归过滤子菜单
+      // 濡傛灉鏈夊瓙鑿滃崟锛屽厛閫掑綊杩囨护瀛愯彍鍗?
       if (item.children && item.children.length > 0) {
         const filteredChildren = filterEmptyMenus(item.children)
         return {
@@ -264,35 +314,34 @@ function filterEmptyMenus(menuList: AppRouteRecord[]): AppRouteRecord[] {
       return item
     })
     .filter((item) => {
-      // 如果定义了 children 属性（即使是空数组），说明这是一个目录菜单，应该保留
+      // 濡傛灉瀹氫箟浜?children 灞炴€э紙鍗充娇鏄┖鏁扮粍锛夛紝璇存槑杩欐槸涓€涓洰褰曡彍鍗曪紝搴旇淇濈暀
       if ('children' in item) {
         return true
       }
 
-      // 如果有外链或 iframe，保留
+      // 濡傛灉鏈夊閾炬垨 iframe锛屼繚鐣?
       if (item.meta?.isIframe === true || item.meta?.link) {
         return true
       }
 
-      // 如果有有效的 component，保留
+      // 濡傛灉鏈夋湁鏁堢殑 component锛屼繚鐣?
       if (item.component && item.component !== '' && item.component !== RoutesAlias.Layout) {
         return true
       }
 
-      // 其他情况过滤掉
+      // 鍏朵粬鎯呭喌杩囨护鎺?
       return false
     })
 }
 
 /**
- * 注册路由并存储菜单数据
- */
+ * 娉ㄥ唽璺敱骞跺瓨鍌ㄨ彍鍗曟暟鎹? */
 async function registerAndStoreMenu(router: Router, menuList: AppRouteRecord[]): Promise<void> {
   if (!isValidMenuList(menuList)) {
-    throw new Error('获取菜单列表失败，请重新登录')
+    throw new Error('鑾峰彇鑿滃崟鍒楄〃澶辫触锛岃閲嶆柊鐧诲綍')
   }
   const menuStore = useMenuStore()
-  // 递归过滤掉为空的菜单项
+  // 閫掑綊杩囨护鎺変负绌虹殑鑿滃崟椤?
   const list = filterEmptyMenus(menuList)
   menuStore.setMenuList(list)
   registerDynamicRoutes(router, list)
@@ -301,7 +350,7 @@ async function registerAndStoreMenu(router: Router, menuList: AppRouteRecord[]):
 }
 
 /**
- * 根据角色过滤菜单
+ * 鏍规嵁瑙掕壊杩囨护鑿滃崟
  */
 const filterMenuByRoles = (menu: AppRouteRecord[], roles: string[]): AppRouteRecord[] => {
   return menu.reduce((acc: AppRouteRecord[], item) => {
@@ -321,15 +370,14 @@ const filterMenuByRoles = (menu: AppRouteRecord[], roles: string[]): AppRouteRec
 }
 
 /**
- * 验证菜单列表是否有效
+ * 楠岃瘉鑿滃崟鍒楄〃鏄惁鏈夋晥
  */
 function isValidMenuList(menuList: AppRouteRecord[]): boolean {
   return Array.isArray(menuList) && menuList.length > 0
 }
 
 /**
- * 重置路由相关状态
- */
+ * 閲嶇疆璺敱鐩稿叧鐘舵€? */
 export function resetRouterState(): void {
   isRouteRegistered.value = false
   const menuStore = useMenuStore()
@@ -338,7 +386,7 @@ export function resetRouterState(): void {
 }
 
 /**
- * 处理根路径跳转到首页
+ * 澶勭悊鏍硅矾寰勮烦杞埌棣栭〉
  */
 function handleRootPathRedirect(to: RouteLocationNormalized, next: NavigationGuardNext): boolean {
   if (to.path === '/') {
@@ -352,7 +400,7 @@ function handleRootPathRedirect(to: RouteLocationNormalized, next: NavigationGua
 }
 
 /**
- * 获取用户信息（如果需要）
+ * 鑾峰彇鐢ㄦ埛淇℃伅锛堝鏋滈渶瑕侊級
  */
 async function fetchUserInfoIfNeeded(from: RouteLocationNormalized): Promise<void> {
   const userStore = useUserStore()
@@ -364,7 +412,7 @@ async function fetchUserInfoIfNeeded(from: RouteLocationNormalized): Promise<voi
       const data = await fetchGetUserInfo()
       userStore.setUserInfo(data)
     } catch (error) {
-      // 前端模式下，用户信息获取失败不影响菜单注册，跳过错误
+      // 鍓嶇妯″紡涓嬶紝鐢ㄦ埛淇℃伅鑾峰彇澶辫触涓嶅奖鍝嶈彍鍗曟敞鍐岋紝璺宠繃閿欒
       if (useCommon().isFrontendMode.value) {
         console.warn('前端模式下获取用户信息失败，跳过：', error)
       } else {
@@ -375,8 +423,7 @@ async function fetchUserInfoIfNeeded(from: RouteLocationNormalized): Promise<voi
 }
 
 /**
- * 判断是否为未授权错误（401）
- */
+ * 鍒ゆ柇鏄惁涓烘湭鎺堟潈閿欒锛?01锛? */
 function isUnauthorizedError(error: unknown): error is HttpError {
   return isHttpError(error) && error.code === ApiStatus.unauthorized
 }

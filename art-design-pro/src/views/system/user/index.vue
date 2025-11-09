@@ -42,13 +42,14 @@
 </template>
 
 <script setup lang="ts">
+  import { h, nextTick, ref } from 'vue'
   import ArtButtonTable from '@/components/core/forms/art-button-table/index.vue'
-  import { ACCOUNT_TABLE_DATA } from '@/mock/temp/formData'
   import { useTable } from '@/composables/useTable'
   import { fetchGetUserList, fetchCreateUser, fetchUpdateUser, fetchDeleteUser, fetchSetUserRoles } from '@/api/system-manage'
   import UserSearch from './modules/user-search.vue'
   import UserDialog from './modules/user-dialog.vue'
   import { ElTag, ElMessageBox, ElImage } from 'element-plus'
+  import defaultAvatar from '@imgs/user/avatar.webp'
 
   defineOptions({ name: 'User' })
 
@@ -125,12 +126,12 @@
           label: '用户名',
           width: 280,
           formatter: (row) => {
+            const avatarSrc = row.avatar || defaultAvatar
             return h('div', { class: 'user', style: 'display: flex; align-items: center' }, [
               h(ElImage, {
                 class: 'avatar',
-                src: row.avatar,
-                previewSrcList: [row.avatar],
-                // 图片预览是否插入至 body 元素上，用于解决表格内部图片预览样式异常
+                src: avatarSrc,
+                previewSrcList: [avatarSrc],
                 previewTeleported: true
               }),
               h('div', {}, [
@@ -181,24 +182,6 @@
       ]
     },
     // 数据处理
-    transform: {
-      // 数据转换器 - 替换头像
-      dataTransformer: (records) => {
-        // 类型守卫检查
-        if (!Array.isArray(records)) {
-          console.warn('数据转换器: 期望数组类型，实际收到:', typeof records)
-          return []
-        }
-
-        // 使用本地头像替换接口返回的头像
-        return records.map((item, index: number) => {
-          return {
-            ...item,
-            avatar: ACCOUNT_TABLE_DATA[index % ACCOUNT_TABLE_DATA.length].avatar
-          }
-        })
-      }
-    }
   })
 
   /**

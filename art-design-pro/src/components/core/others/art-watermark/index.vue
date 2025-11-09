@@ -49,7 +49,7 @@
   const props = withDefaults(defineProps<WatermarkProps>(), {
     content: '',
     visible: false,
-    fontSize: 16,
+    fontSize: undefined,
     fontColor: 'rgba(128, 128, 128, 0.2)',
     rotate: -22,
     gapX: 100,
@@ -70,7 +70,7 @@
   })
 
   const fontSizeComputed = computed(() => {
-    return props.fontSize || systemConfigStore.watermark.fontSize
+    return props.fontSize ?? systemConfigStore.watermark.fontSize
   })
 </script>
 

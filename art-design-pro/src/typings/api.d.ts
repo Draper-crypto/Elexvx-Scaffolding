@@ -147,9 +147,9 @@ declare namespace Api {
       version: string
       title: string
       content: string
+      summary?: string
       releaseDate?: string
       remark?: string
-      requireReLogin?: boolean
       createdAt?: string
       updatedAt?: string
     }
@@ -160,9 +160,9 @@ declare namespace Api {
       version: string
       title: string
       content: string
+      summary: string
       releaseDate?: string
       remark?: string
-      requireReLogin?: boolean
     }
   }
 
@@ -194,6 +194,7 @@ declare namespace Api {
   namespace SystemSetting {
     interface BrandSetting {
       name: string
+      logoUrl: string
     }
 
     interface WatermarkSetting {

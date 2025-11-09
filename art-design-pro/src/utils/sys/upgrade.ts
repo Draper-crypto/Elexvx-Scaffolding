@@ -1,13 +1,15 @@
-import { upgradeLogList } from '@/mock/upgrade/changeLog'
 import { ElNotification } from 'element-plus'
 import { useUserStore } from '@/store/modules/user'
 import { StorageConfig } from '@/utils/storage/storage-config'
+import { fetchLatestChangeLog } from '@/api/change-log'
 
 /**
  * 版本管理器
  * 负责处理版本比较、升级检测和数据清理
  */
 class VersionManager {
+  private latestLog: Api.ChangeLog.Item | null = null
+
   /**
    * 规范化版本号字符串，移除前缀 'v'
    */
@@ -27,6 +29,23 @@ class VersionManager {
    */
   private setStoredVersion(version: string): void {
     localStorage.setItem(StorageConfig.VERSION_KEY, version)
+  }
+
+  /**
+   * 获取最新的更新日志（仅获取一次）
+   */
+  private async ensureLatestLog(): Promise<Api.ChangeLog.Item | null> {
+    if (this.latestLog) {
+      return this.latestLog
+    }
+    try {
+      const latest = await fetchLatestChangeLog()
+      this.latestLog = latest ?? null
+    } catch (error) {
+      console.warn('[Upgrade] 获取最新更新日志失败', error)
+      this.latestLog = null
+    }
+    return this.latestLog
   }
 
   /**
@@ -76,40 +95,21 @@ class VersionManager {
   }
 
   /**
-   * 检查是否需要重新登录
-   */
-  private shouldRequireReLogin(storedVersion: string): boolean {
-    const normalizedCurrent = this.normalizeVersion(StorageConfig.CURRENT_VERSION)
-    const normalizedStored = this.normalizeVersion(storedVersion)
-
-    return upgradeLogList.value.some((item) => {
-      const itemVersion = this.normalizeVersion(item.version)
-      return (
-        item.requireReLogin && itemVersion > normalizedStored && itemVersion <= normalizedCurrent
-      )
-    })
-  }
-
-  /**
    * 构建升级通知消息
    */
-  private buildUpgradeMessage(requireReLogin: boolean): string {
-    const { title: content } = upgradeLogList.value[0]
-
-    const messageParts = [
-      `<p style="color: var(--art-gray-text-800) !important; padding-bottom: 5px;">`,
-      `系统已升级到 ${StorageConfig.CURRENT_VERSION} 版本，此次更新带来了以下改进：`,
-      `</p>`,
-      content
+  private buildUpgradeMessage(latestLog: Api.ChangeLog.Item | null): string {
+    const version = latestLog?.version || StorageConfig.CURRENT_VERSION
+    const summary = latestLog?.summary || '本次更新带来了体验与性能的提升。'
+    const content = latestLog?.content
+    const parts = [
+      `<p style="color: var(--art-gray-text-800); padding-bottom: 6px;">系统已升级到 ${version} 版本：</p>`,
+      `<p style="font-weight:600; margin-bottom: 8px;">${summary}</p>`
     ]
-
-    if (requireReLogin) {
-      messageParts.push(
-        `<p style="color: var(--main-color); padding-top: 5px;">升级完成，请重新登录后继续使用。</p>`
-      )
+    if (content) {
+      parts.push(`<div style="line-height:1.6;">${content}</div>`)
     }
-
-    return messageParts.join('')
+    parts.push(`<p style="margin-top: 10px;">查看更新日志了解更多详情。</p>`)
+    return parts.join('')
   }
 
   /**
@@ -143,18 +143,6 @@ class VersionManager {
   }
 
   /**
-   * 执行升级后的登出操作
-   */
-  private performLogout(): void {
-    try {
-      useUserStore().logOut()
-      console.info('[Upgrade] 已执行升级后登出')
-    } catch (error) {
-      console.error('[Upgrade] 升级后登出失败:', error)
-    }
-  }
-
-  /**
    * 执行升级流程
    */
   private async executeUpgrade(
@@ -162,13 +150,8 @@ class VersionManager {
     legacyStorage: ReturnType<typeof this.findLegacyStorage>
   ): Promise<void> {
     try {
-      if (!upgradeLogList.value.length) {
-        console.warn('[Upgrade] 升级日志列表为空')
-        return
-      }
-
-      const requireReLogin = this.shouldRequireReLogin(storedVersion)
-      const message = this.buildUpgradeMessage(requireReLogin)
+      const latestLog = await this.ensureLatestLog()
+      const message = this.buildUpgradeMessage(latestLog)
 
       // 显示升级通知
       this.showUpgradeNotification(message)
@@ -178,11 +161,6 @@ class VersionManager {
 
       // 清理旧数据
       this.cleanupLegacyData(legacyStorage.oldSysKey, legacyStorage.oldVersionKeys)
-
-      // 执行登出（如果需要）
-      if (requireReLogin) {
-        this.performLogout()
-      }
 
       console.info(`[Upgrade] 升级完成: ${storedVersion} → ${StorageConfig.CURRENT_VERSION}`)
     } catch (error) {

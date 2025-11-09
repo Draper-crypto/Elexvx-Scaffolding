@@ -9,9 +9,9 @@ public class ChangeLogDtos {
     public String version;
     public String title;
     public String content;
+    public String summary;
     public LocalDate releaseDate;
     public String remark;
-    public Boolean requireReLogin;
     public LocalDateTime createdAt;
     public LocalDateTime updatedAt;
   }
@@ -20,8 +20,8 @@ public class ChangeLogDtos {
     public String version;
     public String title;
     public String content;
+    public String summary;
     public LocalDate releaseDate;
     public String remark;
-    public Boolean requireReLogin;
   }
 }

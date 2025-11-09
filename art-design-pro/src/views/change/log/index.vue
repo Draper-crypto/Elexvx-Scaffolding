@@ -34,17 +34,16 @@
             {{ row.releaseDate ? dayjs(row.releaseDate).format('YYYY-MM-DD') : '-' }}
           </template>
         </ElTableColumn>
-        <ElTableColumn prop="requireReLogin" label="需重登" width="100">
+        <ElTableColumn prop="summary" label="更新摘要" min-width="220">
           <template #default="{ row }">
-            <ElTag :type="row.requireReLogin ? 'danger' : 'info'" size="small">
-              {{ row.requireReLogin ? '是' : '否' }}
-            </ElTag>
+            <span v-if="row.summary" v-html="renderRichText(row.summary)"></span>
+            <span v-else>-</span>
           </template>
         </ElTableColumn>
         <ElTableColumn label="备注" prop="remark" min-width="180" />
-        <ElTableColumn label="内容预览" min-width="220">
+        <ElTableColumn label="更新内容" width="120">
           <template #default="{ row }">
-            <div class="content-preview" v-html="row.content"></div>
+            <ElButton type="primary" link @click="openDetail(row)">查看详情</ElButton>
           </template>
         </ElTableColumn>
         <ElTableColumn v-if="canManage" label="操作" width="180" fixed="right">
@@ -85,6 +84,9 @@
         <ElFormItem label="标题" prop="title">
           <ElInput v-model.trim="formModel.title" placeholder="更新标题" />
         </ElFormItem>
+        <ElFormItem label="更新摘要" prop="summary">
+          <ElInput v-model.trim="formModel.summary" placeholder="请输入简单描述" />
+        </ElFormItem>
         <ElFormItem label="发布日期" prop="releaseDate">
           <ElDatePicker
             v-model="formModel.releaseDate"
@@ -92,9 +94,6 @@
             value-format="YYYY-MM-DD"
             placeholder="选择日期"
           />
-        </ElFormItem>
-        <ElFormItem label="需重登" prop="requireReLogin">
-          <ElSwitch v-model="formModel.requireReLogin" />
         </ElFormItem>
         <ElFormItem label="备注">
           <ElInput v-model.trim="formModel.remark" placeholder="可选备注" />
@@ -118,6 +117,32 @@
         </ElSpace>
       </template>
     </ElDrawer>
+
+    <ElDrawer
+      v-model="detailVisible"
+      title="更新详情"
+      size="45%"
+      destroy-on-close
+    >
+      <div v-if="detailRecord">
+        <ElDescriptions :column="1" border>
+          <ElDescriptionsItem label="版本号">{{ detailRecord.version }}</ElDescriptionsItem>
+          <ElDescriptionsItem label="标题">{{ detailRecord.title }}</ElDescriptionsItem>
+        <ElDescriptionsItem label="更新摘要">
+            <div v-if="detailRecord.summary" v-html="renderRichText(detailRecord.summary)"></div>
+            <span v-else>-</span>
+        </ElDescriptionsItem>
+          <ElDescriptionsItem label="发布日期">
+            {{ detailRecord.releaseDate ? dayjs(detailRecord.releaseDate).format('YYYY-MM-DD') : '-' }}
+          </ElDescriptionsItem>
+          <ElDescriptionsItem label="备注">{{ detailRecord.remark || '-' }}</ElDescriptionsItem>
+        </ElDescriptions>
+        <div class="detail-content" v-html="renderRichText(detailRecord.content)"></div>
+      </div>
+      <div v-else class="detail-placeholder">
+        <ElEmpty description="暂无内容" />
+      </div>
+    </ElDrawer>
   </div>
 </template>
 
@@ -127,6 +152,7 @@
   import { ElMessage, ElMessageBox } from 'element-plus'
   import { Editor, Toolbar } from '@wangeditor/editor-for-vue'
   import { IDomEditor, IToolbarConfig } from '@wangeditor/editor'
+  import MarkdownIt from 'markdown-it'
   import type { FormInstance, FormRules } from 'element-plus'
   import dayjs from 'dayjs'
   import { fetchChangeLogs, fetchCreateChangeLog, fetchDeleteChangeLog, fetchPublicChangeLogs, fetchUpdateChangeLog } from '@/api/change-log'
@@ -143,6 +169,18 @@
   const logList = ref<Api.ChangeLog.Item[]>([])
   const formRef = ref<FormInstance>()
   const editorRef = shallowRef<IDomEditor>()
+  const detailVisible = ref(false)
+  const detailRecord = ref<Api.ChangeLog.Item | null>(null)
+  const markdownParser = new MarkdownIt()
+  const htmlTagPattern = /<[a-z][\s\S]*?>/i
+
+  const renderRichText = (value?: string): string => {
+    if (!value) return ''
+    if (htmlTagPattern.test(value)) {
+      return value
+    }
+    return markdownParser.render(value)
+  }
 
   const pagination = reactive({
     current: 1,
@@ -160,14 +198,15 @@
     version: '',
     title: '',
     content: '',
+    summary: '',
     releaseDate: '',
-    remark: '',
-    requireReLogin: false
+    remark: ''
   })
 
   const rules: FormRules = {
     version: [{ required: true, message: '请输入版本号', trigger: 'blur' }],
     title: [{ required: true, message: '请输入标题', trigger: 'blur' }],
+    summary: [{ required: true, message: '请输入更新摘要', trigger: 'blur' }],
     content: [{ required: true, message: '请输入更新内容', trigger: 'blur' }]
   }
 
@@ -226,9 +265,9 @@
         version: row.version,
         title: row.title,
         content: row.content,
+        summary: row.summary || '',
         releaseDate: row.releaseDate || '',
-        remark: row.remark || '',
-        requireReLogin: !!row.requireReLogin
+        remark: row.remark || ''
       })
     } else {
       Object.assign(formModel, {
@@ -236,9 +275,9 @@
         version: '',
         title: '',
         content: '',
+        summary: '',
         releaseDate: dayjs().format('YYYY-MM-DD'),
-        remark: '',
-        requireReLogin: false
+        remark: ''
       })
     }
     formVisible.value = true
@@ -255,9 +294,9 @@
           version: formModel.version,
           title: formModel.title,
           content: formModel.content,
+          summary: formModel.summary,
           releaseDate: formModel.releaseDate,
-          remark: formModel.remark,
-          requireReLogin: formModel.requireReLogin
+          remark: formModel.remark
         }
         if (formModel.id) {
           await fetchUpdateChangeLog(formModel.id, payload)
@@ -290,6 +329,11 @@
     })
   }
 
+  const openDetail = (row: Api.ChangeLog.Item) => {
+    detailRecord.value = row
+    detailVisible.value = true
+  }
+
   const handleEditorCreated = (editor: IDomEditor) => {
     editorRef.value = editor
   }
@@ -319,12 +363,19 @@
       }
     }
 
-    .content-preview {
-      max-height: 70px;
-      overflow: hidden;
+    .detail-content {
+      margin-top: 16px;
+      padding: 16px;
+      border: 1px solid var(--el-border-color);
+      border-radius: 6px;
       color: var(--art-gray-700);
-      font-size: 13px;
-      line-height: 1.5;
+      font-size: 14px;
+      line-height: 1.6;
+      background-color: var(--el-color-white);
+    }
+
+    .detail-placeholder {
+      padding: 24px 0;
     }
 
     .editor-wrapper {

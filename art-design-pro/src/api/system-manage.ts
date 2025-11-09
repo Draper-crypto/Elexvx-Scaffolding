@@ -79,9 +79,10 @@ export function fetchGetRoleList(params: Api.SystemManage.RoleSearchParams) {
 /**
  * 获取菜单列表（后端返回 MenuTree[]），转换为 AppRouteRecord[]
  */
-export function fetchGetMenuList() {
+export function fetchGetMenuList(scope: 'admin' | 'self' = 'admin') {
+  const url = scope === 'admin' ? '/api/admin/menus/tree' : '/api/menus/my'
   return request.get<any[]>({
-    url: '/api/admin/menus/tree'
+    url
   }).then((trees) => transformMenuTrees(trees))
 }
 
@@ -122,6 +123,32 @@ export function fetchUpdateMenuAuth(menuId: number, authId: number, data: Api.Sy
 export function fetchDeleteMenuAuth(menuId: number, authId: number) {
   return request.del<void>({
     url: `/api/admin/menus/${menuId}/auths/${authId}`
+  })
+}
+
+export function fetchGetRoleMenuIds(roleId: number) {
+  return request.get<number[]>({
+    url: `/api/admin/roles/${roleId}/menus`
+  })
+}
+
+export function fetchSetRoleMenus(roleId: number, menuIds: number[]) {
+  return request.put<void>({
+    url: `/api/admin/roles/${roleId}/menus`,
+    data: { menuIds }
+  })
+}
+
+export function fetchGetRolePermissionIds(roleId: number) {
+  return request.get<number[]>({
+    url: `/api/admin/roles/${roleId}/permissions`
+  })
+}
+
+export function fetchSetRolePermissions(roleId: number, permissionIds: number[]) {
+  return request.put<void>({
+    url: `/api/admin/roles/${roleId}/permissions`,
+    data: { permissionIds }
   })
 }
 

@@ -184,6 +184,7 @@
     id: number
     name: string
     path: string
+    menuType?: 'menu' | 'button'
     label: string
     component: string
     icon: string
@@ -365,7 +366,7 @@
 
     await formRef.value.validate(async (valid) => {
       if (valid) {
-        emit('submit', { ...form })
+        emit('submit', { ...form, menuType: menuType.value })
       }
     })
   }

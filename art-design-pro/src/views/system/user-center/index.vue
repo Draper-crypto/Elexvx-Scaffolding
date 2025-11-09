@@ -4,7 +4,23 @@
       <div class="left-wrap">
         <div class="user-wrap box-style">
           <img class="bg" src="@imgs/user/bg.webp" />
-          <img class="avatar" src="@imgs/user/avatar.webp" />
+          <div class="avatar-wrapper">
+            <img class="avatar" :src="avatarSrc" />
+            <div class="avatar-overlay" v-if="avatarUploading">
+              <i class="el-icon-loading"></i>
+            </div>
+          </div>
+          <div class="avatar-action">
+            <ElUpload
+              :before-upload="handleAvatarUpload"
+              :show-file-list="false"
+              :accept="'image/*'"
+            >
+              <ElButton type="primary" :loading="avatarUploading" v-ripple>
+                更换头像
+              </ElButton>
+            </ElUpload>
+          </div>
           <h2 class="name">{{ form.realName || userInfo.displayName || userInfo.userName }}</h2>
           <p class="des">{{ form.des || defaultBio }}</p>
 
@@ -155,12 +171,12 @@
 </template>
 
 <script setup lang="ts">
-  import { computed, reactive, ref, onMounted } from 'vue'
+  import defaultAvatar from '@imgs/user/avatar.webp'
   import { computed, reactive, ref, onMounted } from 'vue'
   import { useUserStore } from '@/store/modules/user'
-  import type { FormInstance, FormRules } from 'element-plus'
-  import { ElMessage } from 'element-plus'
-  import { fetchChangePassword, fetchUpdateProfile, fetchUserProfile } from '@/api/profile'
+  import type { FormInstance, FormRules, UploadRawFile } from 'element-plus'
+  import { ElMessage, ElUpload } from 'element-plus'
+  import { fetchChangePassword, fetchUpdateProfile, fetchUserProfile, uploadProfileAvatar } from '@/api/profile'
   import { useSystemConfigStore } from '@/store/modules/system-config'
 
   defineOptions({ name: 'UserCenter' })
@@ -169,12 +185,14 @@
   const systemConfigStore = useSystemConfigStore()
   const userInfo = computed(() => userStore.getUserInfo)
   const defaultBio = computed(() => `${systemConfigStore.brandName} 是一款兼具设计美学与高效开发的后台系统。`)
+  const avatarSrc = computed(() => userInfo.value.avatar || defaultAvatar)
 
   const isEdit = ref(false)
   const isEditPwd = ref(false)
   const date = ref('')
   const ruleFormRef = ref<FormInstance>()
   const pwdFormRef = ref<FormInstance>()
+  const avatarUploading = ref(false)
 
   /**
    * 用户信息表单
@@ -267,7 +285,9 @@
         ...userStore.getUserInfo,
         fullName: data.name,
         nickname: data.nickname,
-        email: data.email
+        displayName: data.nickname || data.name,
+        email: data.email,
+        avatar: data.avatarUrl
       } as Api.Auth.UserInfo)
     } catch (error) {
       console.error(error)
@@ -278,6 +298,25 @@
     getDate()
     loadProfile()
   })
+
+  const handleAvatarUpload = async (file: UploadRawFile) => {
+    const rawFile = file as File
+    if (!rawFile) return false
+    avatarUploading.value = true
+    try {
+      const avatarUrl = await uploadProfileAvatar(rawFile as File)
+      userStore.setUserInfo({
+        ...userStore.getUserInfo,
+        avatar: avatarUrl
+      } as Api.Auth.UserInfo)
+      ElMessage.success('头像已更新')
+    } catch (error) {
+      console.error('上传头像失败', error)
+    } finally {
+      avatarUploading.value = false
+    }
+    return false
+  }
 
   /**
    * 根据当前时间获取问候语
@@ -381,8 +420,8 @@
 
         .user-wrap {
           position: relative;
-          height: 600px;
-          padding: 35px 40px;
+          min-height: 560px;
+          padding: 35px 40px 50px;
           overflow: hidden;
           text-align: center;
           background: var(--art-main-bg-color);
@@ -397,15 +436,45 @@
             object-fit: cover;
           }
 
-          .avatar {
+          .avatar-wrapper {
             position: relative;
-            z-index: 10;
-            width: 80px;
-            height: 80px;
-            margin-top: 120px;
-            object-fit: cover;
-            border: 2px solid #fff;
-            border-radius: 50%;
+            margin: 0 auto;
+            width: 110px;
+            height: 110px;
+            margin-top: 80px;
+            cursor: pointer;
+
+            .avatar {
+              width: 100%;
+              height: 100%;
+              object-fit: cover;
+              border: 3px solid #fff;
+              border-radius: 50%;
+              display: block;
+            }
+
+            .avatar-overlay {
+              position: absolute;
+              inset: 0;
+              background: rgba(0, 0, 0, 0.4);
+              border-radius: 50%;
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              color: #fff;
+              font-size: 18px;
+            }
+          }
+
+          .avatar-action {
+            margin-top: 10px;
+            display: flex;
+            justify-content: center;
+
+            .el-button {
+              padding: 6px 40px;
+              font-size: 14px;
+            }
           }
 
           .name {

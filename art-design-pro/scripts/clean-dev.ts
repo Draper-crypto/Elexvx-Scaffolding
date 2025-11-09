@@ -397,33 +397,6 @@ export enum RoutesAlias {
   }
 }
 
-// 清理变更日志
-async function cleanChangeLog() {
-  const changeLogPath = path.resolve(process.cwd(), 'src/mock/upgrade/changeLog.ts')
-
-  try {
-    const cleanedChangeLog = `import { ref } from 'vue'
-
-interface UpgradeLog {
-  version: string // 版本号
-  title: string // 更新标题
-  date: string // 更新日期
-  detail?: string[] // 更新内容
-  requireReLogin?: boolean // 是否需要重新登录
-  remark?: string // 备注
-}
-
-export const upgradeLogList = ref<UpgradeLog[]>([])
-`
-
-    await fs.writeFile(changeLogPath, cleanedChangeLog, 'utf-8')
-    console.log(`     ${icons.success} ${fmt.success('清空变更日志数据完成')}`)
-  } catch (err) {
-    console.log(`     ${icons.error} ${fmt.error('清理变更日志失败')}`)
-    console.log(`     ${fmt.dim('错误详情: ' + err)}`)
-  }
-}
-
 // 清理语言文件
 async function cleanLanguageFiles() {
   const languageFiles = [
@@ -803,7 +776,6 @@ async function main() {
 
   console.log(`  ${fmt.badge('步骤 4/6', theme.bgBlue)} ${fmt.title('清空变更日志')}`)
   console.log()
-  await cleanChangeLog()
   console.log()
 
   console.log(`  ${fmt.badge('步骤 5/6', theme.bgBlue)} ${fmt.title('清理语言文件')}`)

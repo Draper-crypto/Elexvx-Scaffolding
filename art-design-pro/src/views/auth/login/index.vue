@@ -23,12 +23,12 @@
             <ElFormItem prop="account">
               <ElSelect v-model="formData.account" class="account-select" placeholder="请选择角色" clearable>
                 <ElOption
-                  v-for="account in accounts"
-                  :key="account.key"
-                  :label="account.label"
-                  :value="account.key"
+                  v-for="role in displayRoleOptions"
+                  :key="role.code"
+                  :label="role.name"
+                  :value="role.code"
                 >
-                  <span>{{ account.label }}</span>
+                  <span>{{ role.name }}</span>
                 </ElOption>
               </ElSelect>
             </ElFormItem>
@@ -99,7 +99,7 @@
 </template>
 
 <script setup lang="ts">
-  import { computed, reactive, ref } from 'vue'
+  import { computed, reactive, ref, watch, onMounted } from 'vue'
   import { useSystemConfigStore } from '@/store/modules/system-config'
   import { useUserStore } from '@/store/modules/user'
   import { getCssVar } from '@/utils/ui'
@@ -107,6 +107,7 @@
   import { HttpError } from '@/utils/http/error'
   import { fetchLogin, fetchGetUserInfo } from '@/api/auth'
   import { ElNotification, type FormInstance, type FormRules } from 'element-plus'
+  import { ROLE_OPTION_CACHE_KEY } from '@/constants/cacheKeys'
 
   defineOptions({ name: 'Login' })
 
@@ -116,42 +117,66 @@
   // 监听语言切换，重置表单
   watch(locale, () => {
     formKey.value++
+    syncRoleOptionsFromCache()
   })
 
-  type AccountKey = 'super' | 'admin' | 'user'
-
-  export interface Account {
-    key: AccountKey
-    label: string
-    userName: string
-    password: string
-    roles: string[]
+  interface LoginRoleOption {
+    code: string
+    name: string
   }
 
   const systemConfigStore = useSystemConfigStore()
-  const accounts = computed<Account[]>(() => [
-    {
-      key: 'super',
-      label: t('login.roles.super'),
-      userName: 'Super',
-      password: '123456',
-      roles: ['R_SUPER']
-    },
-    {
-      key: 'admin',
-      label: t('login.roles.admin'),
-      userName: 'Admin',
-      password: '123456',
-      roles: ['R_ADMIN']
-    },
-    {
-      key: 'user',
-      label: t('login.roles.user'),
-      userName: 'User',
-      password: '123456',
-      roles: ['R_USER']
-    }
+  const roleOptions = ref<LoginRoleOption[]>([])
+
+  const defaultRoleOptions = computed<LoginRoleOption[]>(() => [
+    { code: 'R_SUPER', name: t('login.roles.super') },
+    { code: 'R_ADMIN', name: t('login.roles.admin') },
+    { code: 'R_USER', name: t('login.roles.user') }
   ])
+
+  const displayRoleOptions = computed<LoginRoleOption[]>(() =>
+    roleOptions.value.length ? roleOptions.value : defaultRoleOptions.value
+  )
+
+  const syncRoleOptionsFromCache = () => {
+    if (typeof window === 'undefined') {
+      roleOptions.value = []
+      return
+    }
+    try {
+      const cache = window.localStorage.getItem(ROLE_OPTION_CACHE_KEY)
+      if (!cache) {
+        roleOptions.value = []
+        return
+      }
+      const parsed = JSON.parse(cache)
+      if (!Array.isArray(parsed)) {
+        roleOptions.value = []
+        return
+      }
+      const seen = new Set<string>()
+      roleOptions.value = parsed
+        .map((item: any) => {
+          const code = typeof item.code === 'string' ? item.code.trim() : ''
+          const name =
+            typeof item.name === 'string' && item.name.trim().length
+              ? item.name
+              : code
+          return { code, name }
+        })
+        .filter((item) => {
+          if (!item.code || seen.has(item.code)) return false
+          seen.add(item.code)
+          return true
+        })
+    } catch (error) {
+      roleOptions.value = []
+    }
+  }
+
+  onMounted(() => {
+    syncRoleOptionsFromCache()
+  })
 
   const dragVerify = ref()
 
@@ -200,10 +225,10 @@
       loading.value = true
 
       // 登录请求
-      const { account, username, password } = formData
+      const { account: selectedRoleCode, username, password } = formData
 
       // 登录类型校验：必须选择类型
-      if (!account) {
+      if (!selectedRoleCode) {
         throw new Error(t('login.placeholder.selectRole'))
       }
 
@@ -224,9 +249,8 @@
       userStore.setLoginStatus(true)
 
       // 登录类型与角色校验：不一致则报错并登出
-      const roleMap: Record<string, string> = { super: 'R_SUPER', admin: 'R_ADMIN', user: 'R_USER' }
-      const expected = roleMap[account as string]
-      if (expected && userInfo.roles && !userInfo.roles.includes(expected)) {
+      const userRoles = Array.isArray(userInfo.roles) ? userInfo.roles : []
+      if (selectedRoleCode && userRoles.length && !userRoles.includes(selectedRoleCode)) {
         userStore.logOut()
         throw new Error(t('httpMsg.forbidden') || '登录类型与账号权限不一致')
       }

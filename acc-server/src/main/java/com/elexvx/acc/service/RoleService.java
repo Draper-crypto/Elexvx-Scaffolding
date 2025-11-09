@@ -13,6 +13,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Objects;
+import java.util.stream.Collectors;
 
 @Service
 public class RoleService {
@@ -94,6 +96,13 @@ public class RoleService {
     }
   }
 
+  public List<Long> getMenuIds(Long id) {
+    return roleMenuRepo.findByRoleId(id).stream()
+        .map(SysRoleMenu::getMenuId)
+        .filter(java.util.Objects::nonNull)
+        .collect(Collectors.toList());
+  }
+
   @Transactional
   public void setPermissions(Long id, AssignRolePermissionsRequest req) {
     rolePermRepo.deleteByRoleId(id);
@@ -105,5 +114,12 @@ public class RoleService {
         rolePermRepo.save(rp);
       }
     }
+  }
+
+  public List<Long> getPermissionIds(Long id) {
+    return rolePermRepo.findByRoleId(id).stream()
+        .map(SysRolePermission::getPermissionId)
+        .filter(java.util.Objects::nonNull)
+        .collect(Collectors.toList());
   }
 }

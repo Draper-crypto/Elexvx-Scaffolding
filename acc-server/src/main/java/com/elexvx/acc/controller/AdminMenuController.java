@@ -25,7 +25,7 @@ public class AdminMenuController {
 
   @GetMapping("/{id}")
   @SaCheckPermission("sys:menu:read")
-  public ResponseEntity<ApiResponse<MenuDetail>> detail(@PathVariable Long id) { return ResponseEntity.ok(ApiResponse.success(menuService.get(id))); }
+  public ResponseEntity<ApiResponse<MenuDetail>> detail(@PathVariable("id") Long id) { return ResponseEntity.ok(ApiResponse.success(menuService.get(id))); }
 
   @PostMapping
   @SaCheckPermission("sys:menu:create")
@@ -33,33 +33,33 @@ public class AdminMenuController {
 
   @PutMapping("/{id}")
   @SaCheckPermission("sys:menu:update")
-  public ResponseEntity<ApiResponse<MenuDetail>> update(@PathVariable Long id, @RequestBody MenuUpdateRequest req) { return ResponseEntity.ok(ApiResponse.success(menuService.update(id, req))); }
+  public ResponseEntity<ApiResponse<MenuDetail>> update(@PathVariable("id") Long id, @RequestBody MenuUpdateRequest req) { return ResponseEntity.ok(ApiResponse.success(menuService.update(id, req))); }
 
   @DeleteMapping("/{id}")
   @SaCheckPermission("sys:menu:delete")
-  public ResponseEntity<Void> delete(@PathVariable Long id) { menuService.delete(id); return ResponseEntity.noContent().build(); }
+  public ResponseEntity<Void> delete(@PathVariable("id") Long id) { menuService.delete(id); return ResponseEntity.noContent().build(); }
 
   @PutMapping("/{id}/permissions")
   @SaCheckPermission("sys:menu:bindperms")
-  public ResponseEntity<Void> bindPermissions(@PathVariable Long id, @RequestBody BindMenuPermissionsRequest req) { menuService.bindPermissions(id, req); return ResponseEntity.noContent().build(); }
+  public ResponseEntity<Void> bindPermissions(@PathVariable("id") Long id, @RequestBody BindMenuPermissionsRequest req) { menuService.bindPermissions(id, req); return ResponseEntity.noContent().build(); }
 
   @PostMapping("/{id}/auths")
   @SaCheckPermission("sys:menu:auth:create")
-  public ResponseEntity<ApiResponse<MenuAuth>> createAuth(@PathVariable Long id, @RequestBody MenuAuthRequest req) {
+  public ResponseEntity<ApiResponse<MenuAuth>> createAuth(@PathVariable("id") Long id, @RequestBody MenuAuthRequest req) {
     Long operator = StpUtil.getLoginIdAsLong();
     return ResponseEntity.ok(ApiResponse.success(menuService.createAuth(id, req, operator)));
   }
 
   @PutMapping("/{id}/auths/{authId}")
   @SaCheckPermission("sys:menu:auth:update")
-  public ResponseEntity<ApiResponse<MenuAuth>> updateAuth(@PathVariable Long id, @PathVariable Long authId, @RequestBody MenuAuthRequest req) {
+  public ResponseEntity<ApiResponse<MenuAuth>> updateAuth(@PathVariable("id") Long id, @PathVariable("authId") Long authId, @RequestBody MenuAuthRequest req) {
     Long operator = StpUtil.getLoginIdAsLong();
     return ResponseEntity.ok(ApiResponse.success(menuService.updateAuth(id, authId, req, operator)));
   }
 
   @DeleteMapping("/{id}/auths/{authId}")
   @SaCheckPermission("sys:menu:auth:delete")
-  public ResponseEntity<Void> deleteAuth(@PathVariable Long id, @PathVariable Long authId) {
+  public ResponseEntity<Void> deleteAuth(@PathVariable("id") Long id, @PathVariable("authId") Long authId) {
     menuService.deleteAuth(id, authId);
     return ResponseEntity.noContent().build();
   }

@@ -4,17 +4,28 @@ import com.elexvx.acc.dto.MenuDtos.*;
 import com.elexvx.acc.entity.SysMenu;
 import com.elexvx.acc.entity.SysMenuPermission;
 import com.elexvx.acc.entity.SysPermission;
+import com.elexvx.acc.entity.SysRole;
+import com.elexvx.acc.entity.SysRoleMenu;
 import com.elexvx.acc.entity.SysRolePermission;
+import com.elexvx.acc.entity.SysUserRole;
 import com.elexvx.acc.repo.SysMenuPermissionRepository;
 import com.elexvx.acc.repo.SysMenuRepository;
 import com.elexvx.acc.repo.SysPermissionRepository;
+import com.elexvx.acc.repo.SysRoleMenuRepository;
 import com.elexvx.acc.repo.SysRolePermissionRepository;
+import com.elexvx.acc.repo.SysRoleRepository;
+import com.elexvx.acc.repo.SysUserRoleRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 @Service
 public class MenuService {
@@ -22,19 +33,67 @@ public class MenuService {
   private final SysMenuPermissionRepository menuPermRepo;
   private final SysPermissionRepository permRepo;
   private final SysRolePermissionRepository rolePermRepo;
+  private final SysRoleMenuRepository roleMenuRepo;
+  private final SysUserRoleRepository userRoleRepo;
+  private final SysRoleRepository roleRepo;
 
   public MenuService(SysMenuRepository menuRepo,
                      SysMenuPermissionRepository menuPermRepo,
                      SysPermissionRepository permRepo,
-                     SysRolePermissionRepository rolePermRepo) {
+                     SysRolePermissionRepository rolePermRepo,
+                     SysRoleMenuRepository roleMenuRepo,
+                     SysUserRoleRepository userRoleRepo,
+                     SysRoleRepository roleRepo) {
     this.menuRepo = menuRepo;
     this.menuPermRepo = menuPermRepo;
     this.permRepo = permRepo;
     this.rolePermRepo = rolePermRepo;
+    this.roleMenuRepo = roleMenuRepo;
+    this.userRoleRepo = userRoleRepo;
+    this.roleRepo = roleRepo;
   }
 
   public List<MenuTree> tree() {
     return buildTree(null);
+  }
+
+  public List<MenuTree> treeForUser(Long userId) {
+    if (userId == null) {
+      return new ArrayList<>();
+    }
+    List<SysUserRole> userRoles = userRoleRepo.findByUserId(userId);
+    if (userRoles.isEmpty()) {
+      return new ArrayList<>();
+    }
+    List<Long> roleIds = userRoles.stream()
+        .map(SysUserRole::getRoleId)
+        .filter(Objects::nonNull)
+        .distinct()
+        .collect(Collectors.toList());
+    if (roleIds.isEmpty()) {
+      return new ArrayList<>();
+    }
+    if (hasSuperRole(roleIds)) {
+      return tree();
+    }
+    List<SysRoleMenu> roleMenus = roleMenuRepo.findByRoleIdIn(roleIds);
+    if (roleMenus == null || roleMenus.isEmpty()) {
+      return new ArrayList<>();
+    }
+    Set<Long> menuIds = roleMenus.stream()
+        .map(SysRoleMenu::getMenuId)
+        .filter(Objects::nonNull)
+        .collect(Collectors.toSet());
+    if (menuIds.isEmpty()) {
+      return new ArrayList<>();
+    }
+    Set<Long> effectiveMenuIds = includeAncestorMenus(menuIds);
+    Set<Long> permIds = rolePermRepo.findByRoleIdIn(roleIds).stream()
+        .map(SysRolePermission::getPermissionId)
+        .filter(Objects::nonNull)
+        .collect(Collectors.toSet());
+    List<MenuTree> fullTree = tree();
+    return filterMenuTree(fullTree, effectiveMenuIds, permIds);
   }
 
   private List<MenuTree> buildTree(Long parentId) {
@@ -80,6 +139,7 @@ public class MenuService {
     for (SysMenuPermission binding : bindings) {
       removePermissionBinding(binding.getPermissionId(), binding.getMenuId());
     }
+    roleMenuRepo.deleteByMenuId(id);
     menuRepo.deleteById(id);
   }
 
@@ -272,6 +332,60 @@ public class MenuService {
       rolePermRepo.deleteByPermissionId(permissionId);
       permRepo.deleteById(permissionId);
     }
+  }
+
+  private List<MenuTree> filterMenuTree(List<MenuTree> nodes, Set<Long> allowedMenuIds, Set<Long> allowedPermIds) {
+    List<MenuTree> filtered = new ArrayList<>();
+    if (nodes == null) {
+      return filtered;
+    }
+    for (MenuTree node : nodes) {
+      if (node == null) continue;
+      node.children = filterMenuTree(node.children, allowedMenuIds, allowedPermIds);
+      if (allowedPermIds != null) {
+        node.authList.removeIf(auth -> auth == null || auth.id == null || !allowedPermIds.contains(auth.id));
+      }
+      boolean hasChildren = node.children != null && !node.children.isEmpty();
+      if (allowedMenuIds.contains(node.id) || hasChildren) {
+        filtered.add(node);
+      }
+    }
+    return filtered;
+  }
+
+  private Set<Long> includeAncestorMenus(Set<Long> menuIds) {
+    if (menuIds == null) {
+      return new HashSet<>();
+    }
+    Set<Long> result = new HashSet<>(menuIds);
+    if (menuIds.isEmpty()) {
+      return result;
+    }
+    Map<Long, Long> parentMap = menuRepo.findAll().stream()
+        .collect(Collectors.toMap(SysMenu::getId, SysMenu::getParentId));
+    for (Long id : menuIds) {
+      Long parent = parentMap.get(id);
+      while (parent != null && result.add(parent)) {
+        parent = parentMap.get(parent);
+      }
+    }
+    return result;
+  }
+
+  private boolean hasSuperRole(List<Long> roleIds) {
+    if (roleIds == null || roleIds.isEmpty()) {
+      return false;
+    }
+    for (SysRole role : roleRepo.findAllById(roleIds)) {
+      if (role == null) continue;
+      String code = role.getRoleCode();
+      if (code == null) continue;
+      String normalized = code.trim().toLowerCase();
+      if ("r_super".equalsIgnoreCase(code) || "sys_admin".equalsIgnoreCase(code) || "super_admin".equals(normalized)) {
+        return true;
+      }
+    }
+    return false;
   }
 
   // 演示菜单种子（仅当数据库为空时插入）

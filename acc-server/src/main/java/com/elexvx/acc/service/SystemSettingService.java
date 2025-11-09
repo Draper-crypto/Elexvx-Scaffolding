@@ -37,6 +37,7 @@ public class SystemSettingService {
   public BrandSetting updateBrand(UpdateBrandRequest req, Long operatorId) {
     BrandSetting payload = new BrandSetting();
     payload.name = (req.name == null || req.name.isBlank()) ? DEFAULT_BRAND : req.name.trim();
+    payload.logoUrl = (req.logoUrl == null || req.logoUrl.isBlank()) ? "" : req.logoUrl.trim();
     upsertSetting(BRAND_KEY, payload, operatorId, "品牌配置");
     return payload;
   }
@@ -62,6 +63,7 @@ public class SystemSettingService {
         .orElseGet(() -> {
           BrandSetting setting = new BrandSetting();
           setting.name = DEFAULT_BRAND;
+          setting.logoUrl = "";
           return setting;
         });
   }

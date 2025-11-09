@@ -20,14 +20,14 @@ public class SysChangeLog {
   @Column(name = "content", columnDefinition = "longtext")
   private String content;
 
+  @Column(name = "summary", length = 255)
+  private String summary;
+
   @Column(name = "release_date")
   private LocalDate releaseDate;
 
   @Column(name = "remark", length = 255)
   private String remark;
-
-  @Column(name = "require_relogin")
-  private Integer requireReLogin;
 
   @Column(name = "created_at")
   private LocalDateTime createdAt;
@@ -49,12 +49,12 @@ public class SysChangeLog {
   public void setTitle(String title) { this.title = title; }
   public String getContent() { return content; }
   public void setContent(String content) { this.content = content; }
+  public String getSummary() { return summary; }
+  public void setSummary(String summary) { this.summary = summary; }
   public LocalDate getReleaseDate() { return releaseDate; }
   public void setReleaseDate(LocalDate releaseDate) { this.releaseDate = releaseDate; }
   public String getRemark() { return remark; }
   public void setRemark(String remark) { this.remark = remark; }
-  public Integer getRequireReLogin() { return requireReLogin; }
-  public void setRequireReLogin(Integer requireReLogin) { this.requireReLogin = requireReLogin; }
   public LocalDateTime getCreatedAt() { return createdAt; }
   public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
   public LocalDateTime getUpdatedAt() { return updatedAt; }

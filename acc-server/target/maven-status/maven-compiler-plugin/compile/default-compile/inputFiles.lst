@@ -1,4 +1,5 @@
 C:\Users\Administrator\Documents\GitHub\Elexvx-Scaffolding\acc-server\src\main\java\com\elexvx\acc\security\StpInterfaceImpl.java
+C:\Users\Administrator\Documents\GitHub\Elexvx-Scaffolding\acc-server\src\main\java\com\elexvx\acc\controller\MenuController.java
 C:\Users\Administrator\Documents\GitHub\Elexvx-Scaffolding\acc-server\src\main\java\com\elexvx\acc\entity\SysChangeLog.java
 C:\Users\Administrator\Documents\GitHub\Elexvx-Scaffolding\acc-server\src\main\java\com\elexvx\acc\dto\UserDtos.java
 C:\Users\Administrator\Documents\GitHub\Elexvx-Scaffolding\acc-server\src\main\java\com\elexvx\acc\repo\SysChangeLogRepository.java
@@ -25,6 +26,7 @@ C:\Users\Administrator\Documents\GitHub\Elexvx-Scaffolding\acc-server\src\main\j
 C:\Users\Administrator\Documents\GitHub\Elexvx-Scaffolding\acc-server\src\main\java\com\elexvx\acc\dto\ChangeLogDtos.java
 C:\Users\Administrator\Documents\GitHub\Elexvx-Scaffolding\acc-server\src\main\java\com\elexvx\acc\entity\SysRolePermission.java
 C:\Users\Administrator\Documents\GitHub\Elexvx-Scaffolding\acc-server\src\main\java\com\elexvx\acc\dto\MenuDtos.java
+C:\Users\Administrator\Documents\GitHub\Elexvx-Scaffolding\acc-server\src\main\java\com\elexvx\acc\config\UploadConfig.java
 C:\Users\Administrator\Documents\GitHub\Elexvx-Scaffolding\acc-server\src\main\java\com\elexvx\acc\controller\AdminMenuController.java
 C:\Users\Administrator\Documents\GitHub\Elexvx-Scaffolding\acc-server\src\main\java\com\elexvx\acc\entity\SysPage.java
 C:\Users\Administrator\Documents\GitHub\Elexvx-Scaffolding\acc-server\src\main\java\com\elexvx\acc\controller\AdminRoleController.java
@@ -43,3 +45,4 @@ C:\Users\Administrator\Documents\GitHub\Elexvx-Scaffolding\acc-server\src\main\j
 C:\Users\Administrator\Documents\GitHub\Elexvx-Scaffolding\acc-server\src\main\java\com\elexvx\acc\controller\UserProfileController.java
 C:\Users\Administrator\Documents\GitHub\Elexvx-Scaffolding\acc-server\src\main\java\com\elexvx\acc\dto\SystemSettingDtos.java
 C:\Users\Administrator\Documents\GitHub\Elexvx-Scaffolding\acc-server\src\main\java\com\elexvx\acc\service\UserService.java
+C:\Users\Administrator\Documents\GitHub\Elexvx-Scaffolding\acc-server\src\main\java\com\elexvx\acc\service\FileStorageService.java

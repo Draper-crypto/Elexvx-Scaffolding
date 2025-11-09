@@ -55,6 +55,8 @@
   import { useTableColumns } from '@/composables/useTableColumns'
   import type { AppRouteRecord } from '@/types/router'
   import MenuDialog from './modules/menu-dialog.vue'
+  import { useMenuStore } from '@/store/modules/menu'
+  import { menuDataToRouter } from '@/router/utils/menuToRouter'
   import {
     fetchCreateMenu,
     fetchCreateMenuAuth,
@@ -65,8 +67,12 @@
     fetchUpdateMenuAuth
   } from '@/api/system-manage'
   import { ElTag, ElMessage, ElMessageBox } from 'element-plus'
+  import { useRouter, useRoute } from 'vue-router'
+  import { resetRouterState } from '@/router/guards/beforeEach'
 
   defineOptions({ name: 'Menus' })
+
+  const menuStore = useMenuStore()
 
   // 状态管理
   const loading = ref(false)
@@ -371,9 +377,9 @@
   const handleAddMenu = (): void => {
     dialogType.value = 'menu'
     editData.value = null
-    lockMenuType.value = true
-     currentMenuContext.value = null
-     editingMenuId.value = null
+    lockMenuType.value = false
+    currentMenuContext.value = null
+    editingMenuId.value = null
     dialogVisible.value = true
   }
 
@@ -427,6 +433,7 @@
   interface MenuFormData {
     name: string
     path: string
+    menuType?: 'menu' | 'button'
     component?: string
     icon?: string
     roles?: string[]
@@ -438,9 +445,34 @@
    * 提交表单数据
    * @param formData 表单数据
    */
+  const router = useRouter()
+  const route = useRoute()
+
+  const reloadNavigations = async () => {
+    resetRouterState()
+    await router.replace({
+      path: route.path,
+      query: {
+        ...route.query,
+        _menu_refresh: Date.now()
+      }
+    })
+  }
+
+  const refreshSidebarMenus = async () => {
+    try {
+      const selfMenus = await fetchGetMenuList('self')
+      const formattedMenus = selfMenus.map((item) => menuDataToRouter(item))
+      menuStore.setMenuList(formattedMenus)
+    } catch (error) {
+      console.error('刷新导航菜单失败', error)
+    }
+  }
+
   const handleSubmit = async (formData: MenuFormData): Promise<void> => {
     try {
-      if (dialogType.value === 'menu') {
+      const submitType = formData.menuType ?? dialogType.value
+      if (submitType === 'menu') {
         const parentId =
           (editingMenuId.value ? editData.value?.parentId : currentMenuContext.value?.id) ?? null
         const payload: Api.SystemManage.MenuSubmitData = {
@@ -493,7 +525,9 @@
       editingMenuId.value = null
       editingAuthId.value = null
       activeMenuIdForAuth.value = null
-      getMenuList()
+      await reloadNavigations()
+      await refreshSidebarMenus()
+      await getMenuList()
     } catch (error) {
       console.error(error)
     }
@@ -511,7 +545,9 @@
       })
       await fetchDeleteMenu(Number(row.id))
       ElMessage.success('删除成功')
-      getMenuList()
+      await reloadNavigations()
+      await refreshSidebarMenus()
+      await getMenuList()
     } catch (error) {
       if (error !== 'cancel') {
         ElMessage.error('删除失败')

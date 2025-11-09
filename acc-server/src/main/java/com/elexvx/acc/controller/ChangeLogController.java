@@ -35,7 +35,7 @@ public class ChangeLogController {
 
   @GetMapping("/{id}")
   @SaCheckPermission("sys:changelog:read")
-  public ResponseEntity<ApiResponse<ChangeLogItem>> detail(@PathVariable Long id) {
+  public ResponseEntity<ApiResponse<ChangeLogItem>> detail(@PathVariable("id") Long id) {
     return ResponseEntity.ok(ApiResponse.success(changeLogService.get(id)));
   }
 
@@ -48,14 +48,14 @@ public class ChangeLogController {
 
   @PutMapping("/{id}")
   @SaCheckPermission("sys:changelog:update")
-  public ResponseEntity<ApiResponse<ChangeLogItem>> update(@PathVariable Long id, @RequestBody ChangeLogRequest req) {
+  public ResponseEntity<ApiResponse<ChangeLogItem>> update(@PathVariable("id") Long id, @RequestBody ChangeLogRequest req) {
     Long operator = StpUtil.getLoginIdAsLong();
     return ResponseEntity.ok(ApiResponse.success(changeLogService.update(id, req, operator)));
   }
 
   @DeleteMapping("/{id}")
   @SaCheckPermission("sys:changelog:delete")
-  public ResponseEntity<Void> delete(@PathVariable Long id) {
+  public ResponseEntity<Void> delete(@PathVariable("id") Long id) {
     changeLogService.delete(id);
     return ResponseEntity.noContent().build();
   }
@@ -63,5 +63,10 @@ public class ChangeLogController {
   @GetMapping("/public")
   public ResponseEntity<ApiResponse<List<ChangeLogItem>>> publicList() {
     return ResponseEntity.ok(ApiResponse.success(changeLogService.listPublic()));
+  }
+
+  @GetMapping("/latest")
+  public ResponseEntity<ApiResponse<ChangeLogItem>> latest() {
+    return ResponseEntity.ok(ApiResponse.success(changeLogService.latest()));
   }
 }

@@ -16,6 +16,7 @@ export const useSystemConfigStore = defineStore(
   'systemConfig',
   () => {
     const brandName = ref(AppConfig.systemInfo.name)
+    const logoUrl = ref(AppConfig.systemInfo.logo || '')
     const watermark = reactive<WatermarkConfig>({
       enabled: true,
       mode: 'username',
@@ -50,6 +51,11 @@ export const useSystemConfigStore = defineStore(
         if (data.brand?.name) {
           brandName.value = data.brand.name
         }
+        if (data.brand?.logoUrl) {
+          logoUrl.value = data.brand.logoUrl
+        } else {
+          logoUrl.value = AppConfig.systemInfo.logo || ''
+        }
         if (data.watermark) {
           watermark.enabled = !!data.watermark.enabled
           watermark.mode = (data.watermark.mode as WatermarkConfig['mode']) || 'username'
@@ -73,6 +79,7 @@ export const useSystemConfigStore = defineStore(
 
     return {
       brandName,
+      logoUrl,
       watermark,
       resolvedWatermarkText,
       effectiveWatermarkVisible,

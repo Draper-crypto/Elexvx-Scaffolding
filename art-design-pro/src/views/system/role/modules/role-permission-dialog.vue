@@ -8,25 +8,33 @@
     @close="handleClose"
   >
     <ElScrollbar height="70vh">
-      <ElTree
-        ref="treeRef"
-        :data="processedMenuList"
-        show-checkbox
-        node-key="name"
-        :default-expand-all="isExpandAll"
-        :default-checked-keys="[1, 2, 3]"
-        :props="defaultProps"
-        @check="handleTreeCheck"
-      >
-        <template #default="{ data }">
-          <div style="display: flex; align-items: center">
-            <span v-if="data.isAuth">
-              {{ data.label }}
-            </span>
-            <span v-else>{{ defaultProps.label(data) }}</span>
-          </div>
-        </template>
-      </ElTree>
+      <template v-if="roleId">
+        <div v-if="!treeData.length && !loading" class="empty-holder">
+          <ElEmpty description="暂无菜单数据" :image-size="120" />
+        </div>
+        <ElTree
+          v-else
+          ref="treeRef"
+          :data="treeData"
+          show-checkbox
+          node-key="nodeKey"
+          :default-expand-all="isExpandAll"
+          :props="defaultProps"
+          :expand-on-click-node="false"
+          v-loading="loading"
+          @check="handleTreeCheck"
+        >
+          <template #default="{ data }">
+            <div class="tree-node">
+              <span class="node-label">{{ data.label }}</span>
+              <ElTag v-if="data.isAuth" type="info" size="small" effect="plain">按钮</ElTag>
+            </div>
+          </template>
+        </ElTree>
+      </template>
+      <div v-else class="empty-holder">
+        <ElEmpty description="请选择角色" :image-size="120" />
+      </div>
     </ElScrollbar>
     <template #footer>
       <div class="dialog-footer">
@@ -43,8 +51,17 @@
 </template>
 
 <script setup lang="ts">
-  import { useMenuStore } from '@/store/modules/menu'
+  import { computed, nextTick, ref, watch } from 'vue'
+  import { ElMessage } from 'element-plus'
   import { formatMenuTitle } from '@/router/utils/utils'
+  import type { AppRouteRecord } from '@/types/router'
+  import {
+    fetchGetMenuList,
+    fetchGetRoleMenuIds,
+    fetchGetRolePermissionIds,
+    fetchSetRoleMenus,
+    fetchSetRolePermissions
+  } from '@/api/system-manage'
 
   type RoleListItem = Api.SystemManage.RoleListItem
 
@@ -58,6 +75,15 @@
     (e: 'success'): void
   }
 
+  interface MenuNode {
+    nodeKey: string
+    label: string
+    isAuth?: boolean
+    menuId?: number
+    permissionId?: number
+    children?: MenuNode[]
+  }
+
   const props = withDefaults(defineProps<Props>(), {
     modelValue: false,
     roleData: undefined
@@ -65,119 +91,132 @@
 
   const emit = defineEmits<Emits>()
 
-  const { menuList } = storeToRefs(useMenuStore())
-  const treeRef = ref()
-  const isExpandAll = ref(true)
-  const isSelectAll = ref(false)
-
-  /**
-   * 弹窗显示状态双向绑定
-   */
   const visible = computed({
     get: () => props.modelValue,
     set: (value) => emit('update:modelValue', value)
   })
 
-  /**
-   * 菜单节点类型
-   */
-  interface MenuNode {
-    id?: string | number
-    name?: string
-    label?: string
-    meta?: {
-      title?: string
-      authList?: Array<{
-        authMark: string
-        title: string
-        checked?: boolean
-      }>
-    }
-    children?: MenuNode[]
-    [key: string]: any
-  }
+  const roleId = computed(() => props.roleData?.roleId ?? null)
 
-  /**
-   * 处理菜单数据，将 authList 转换为树形子节点
-   * 递归处理菜单树，将权限列表展开为可选择的子节点
-   */
-  const processedMenuList = computed(() => {
-    const processNode = (node: MenuNode): MenuNode => {
-      const processed = { ...node }
+  const treeRef = ref()
+  const isExpandAll = ref(true)
+  const isSelectAll = ref(false)
+  const loading = ref(false)
+  const treeData = ref<MenuNode[]>([])
 
-      // 如果有 authList，将其转换为子节点
-      if (node.meta?.authList?.length) {
-        const authNodes = node.meta.authList.map((auth) => ({
-          id: `${node.id}_${auth.authMark}`,
-          name: `${node.name}_${auth.authMark}`,
-          label: auth.title,
-          authMark: auth.authMark,
-          isAuth: true,
-          checked: auth.checked || false
-        }))
-
-        processed.children = processed.children ? [...processed.children, ...authNodes] : authNodes
-      }
-
-      // 递归处理子节点
-      if (processed.children) {
-        processed.children = processed.children.map(processNode)
-      }
-
-      return processed
-    }
-
-    return (menuList.value as any[]).map(processNode)
-  })
-
-  /**
-   * 树形组件配置
-   */
   const defaultProps = {
     children: 'children',
-    label: (data: any) => formatMenuTitle(data.meta?.title) || data.label || ''
+    label: (data: MenuNode) => data.label || ''
   }
 
-  /**
-   * 监听弹窗打开，初始化权限数据
-   */
   watch(
     () => props.modelValue,
-    (newVal) => {
-      if (newVal && props.roleData) {
-        // TODO: 根据角色加载对应的权限数据
-        console.log('设置权限:', props.roleData)
+    (open) => {
+      if (open && roleId.value) {
+        loadRolePermissions(roleId.value)
+      }
+      if (!open) {
+        resetTreeState()
       }
     }
   )
 
-  /**
-   * 关闭弹窗并清空选中状态
-   */
-  const handleClose = () => {
-    visible.value = false
+  watch(
+    () => roleId.value,
+    (newRoleId, oldRoleId) => {
+      if (visible.value && newRoleId && newRoleId !== oldRoleId) {
+        loadRolePermissions(newRoleId)
+      }
+    }
+  )
+
+  const resetTreeState = () => {
     treeRef.value?.setCheckedKeys([])
+    treeData.value = []
+    isSelectAll.value = false
   }
 
-  /**
-   * 保存权限配置
-   */
-  const savePermission = () => {
-    // TODO: 调用保存权限接口
-    ElMessage.success('权限保存成功')
-    emit('success')
-    handleClose()
+  const loadRolePermissions = async (id: number) => {
+    loading.value = true
+    try {
+      const [menus, menuIds, permissionIds] = await Promise.all([
+        fetchGetMenuList('admin'),
+        fetchGetRoleMenuIds(id),
+        fetchGetRolePermissionIds(id)
+      ])
+      treeData.value = buildTreeNodes(menus || [])
+      await nextTick()
+      const defaultKeys = [
+        ...(menuIds || []).map((mid) => `menu-${mid}`),
+        ...(permissionIds || []).map((pid) => `perm-${pid}`)
+      ]
+      treeRef.value?.setCheckedKeys(defaultKeys)
+      updateSelectAllState()
+    } catch (error) {
+      console.error('加载菜单权限失败', error)
+      treeData.value = []
+    } finally {
+      loading.value = false
+    }
   }
 
-  /**
-   * 切换全部展开/收起状态
-   */
+  const buildTreeNodes = (menus: AppRouteRecord[]): MenuNode[] => {
+    return (menus || []).map((menu) => {
+      const node: MenuNode = {
+        nodeKey:
+          menu.id != null ? `menu-${menu.id}` : `menu-${menu.path || Math.random().toString(36).slice(2)}`,
+        label: formatMenuTitle(menu.meta?.title || menu.name || ''),
+        menuId: menu.id != null ? Number(menu.id) : undefined,
+        children: []
+      }
+      if (menu.children?.length) {
+        node.children = buildTreeNodes(menu.children)
+      }
+      if (menu.meta?.authList?.length) {
+        const authNodes: MenuNode[] = menu.meta.authList.map((auth) => ({
+          nodeKey:
+            auth.id != null
+              ? `perm-${auth.id}`
+              : `perm-${menu.id ?? menu.path ?? 'temp'}-${auth.authMark}`,
+          label: auth.title || auth.authMark,
+          isAuth: true,
+          permissionId: auth.id != null ? Number(auth.id) : undefined,
+          menuId: auth.menuId
+        }))
+        node.children =
+          node.children && node.children.length ? [...node.children, ...authNodes] : authNodes
+      }
+      return node
+    })
+  }
+
+  const getAllNodeKeys = (nodes: MenuNode[]): string[] => {
+    const keys: string[] = []
+    nodes.forEach((node) => {
+      keys.push(node.nodeKey)
+      if (node.children?.length) {
+        keys.push(...getAllNodeKeys(node.children))
+      }
+    })
+    return keys
+  }
+
+  const updateSelectAllState = () => {
+    const tree = treeRef.value
+    if (!tree) {
+      isSelectAll.value = false
+      return
+    }
+    const checkedKeys = tree.getCheckedKeys()
+    const allKeys = getAllNodeKeys(treeData.value)
+    isSelectAll.value = allKeys.length > 0 && checkedKeys.length === allKeys.length
+  }
+
   const toggleExpandAll = () => {
     const tree = treeRef.value
     if (!tree) return
 
     const nodes = tree.store.nodesMap
-    // 这里保留 any，因为 Element Plus 的内部节点类型较复杂
     Object.values(nodes).forEach((node: any) => {
       node.expanded = !isExpandAll.value
     })
@@ -185,15 +224,12 @@
     isExpandAll.value = !isExpandAll.value
   }
 
-  /**
-   * 切换全选/取消全选状态
-   */
   const toggleSelectAll = () => {
     const tree = treeRef.value
     if (!tree) return
 
     if (!isSelectAll.value) {
-      const allKeys = getAllNodeKeys(processedMenuList.value)
+      const allKeys = getAllNodeKeys(treeData.value)
       tree.setCheckedKeys(allKeys)
     } else {
       tree.setCheckedKeys([])
@@ -202,58 +238,70 @@
     isSelectAll.value = !isSelectAll.value
   }
 
-  /**
-   * 递归获取所有节点的 key
-   * @param nodes 节点列表
-   * @returns 所有节点的 key 数组
-   */
-  const getAllNodeKeys = (nodes: MenuNode[]): string[] => {
-    const keys: string[] = []
-    const traverse = (nodeList: MenuNode[]): void => {
-      nodeList.forEach((node) => {
-        if (node.name) keys.push(node.name)
-        if (node.children?.length) traverse(node.children)
-      })
-    }
-    traverse(nodes)
-    return keys
-  }
-
-  /**
-   * 处理树节点选中状态变化
-   * 同步更新全选按钮状态
-   */
   const handleTreeCheck = () => {
-    const tree = treeRef.value
-    if (!tree) return
-
-    const checkedKeys = tree.getCheckedKeys()
-    const allKeys = getAllNodeKeys(processedMenuList.value)
-
-    isSelectAll.value = checkedKeys.length === allKeys.length && allKeys.length > 0
+    updateSelectAllState()
   }
 
-  /**
-   * 输出选中的权限数据到控制台
-   * 用于调试和查看当前选中的权限配置
-   */
+  const buildSelectionPayload = () => {
+    const tree = treeRef.value
+    if (!tree) return { menuIds: [] as number[], permissionIds: [] as number[] }
+
+    const checkedKeys: string[] = tree.getCheckedKeys()
+    const halfCheckedKeys: string[] = tree.getHalfCheckedKeys()
+
+    const menuIds = [...checkedKeys, ...halfCheckedKeys]
+      .filter((key) => key.startsWith('menu-'))
+      .map((key) => Number(key.replace('menu-', '')))
+    const permissionIds = checkedKeys
+      .filter((key) => key.startsWith('perm-'))
+      .map((key) => Number(key.replace('perm-', '')))
+
+    return {
+      menuIds: Array.from(new Set(menuIds)),
+      permissionIds: Array.from(new Set(permissionIds))
+    }
+  }
+
+  const savePermission = async () => {
+    if (!roleId.value) {
+      ElMessage.warning('请选择角色')
+      return
+    }
+    const { menuIds, permissionIds } = buildSelectionPayload()
+    try {
+      await Promise.all([
+        fetchSetRoleMenus(roleId.value, menuIds),
+        fetchSetRolePermissions(roleId.value, permissionIds)
+      ])
+      ElMessage.success('权限保存成功')
+      emit('success')
+      handleClose()
+    } catch (error) {
+      console.error('保存权限失败', error)
+    }
+  }
+
+  const handleClose = () => {
+    visible.value = false
+    resetTreeState()
+  }
+
   const outputSelectedData = () => {
     const tree = treeRef.value
     if (!tree) return
 
+    const payload = buildSelectionPayload()
     const selectedData = {
+      ...payload,
       checkedKeys: tree.getCheckedKeys(),
-      halfCheckedKeys: tree.getHalfCheckedKeys(),
-      checkedNodes: tree.getCheckedNodes(),
-      halfCheckedNodes: tree.getHalfCheckedNodes(),
-      totalChecked: tree.getCheckedKeys().length,
-      totalHalfChecked: tree.getHalfCheckedKeys().length
+      halfCheckedKeys: tree.getHalfCheckedKeys()
     }
 
-    console.log('=== 选中的权限数据 ===', selectedData)
-    ElMessage.success(`已输出选中数据到控制台，共选中 ${selectedData.totalChecked} 个节点`)
+    console.log('=== 选中的权限数�?===', selectedData)
+    ElMessage.success(`已输出选中数据到控制台，共选中 ${payload.permissionIds.length} 个按钮节点`)
   }
 </script>
+
 
 <style lang="scss" scoped>
   .dialog-footer {
@@ -261,4 +309,19 @@
     gap: 12px;
     justify-content: flex-end;
   }
+
+  .empty-holder {
+    padding: 24px 0;
+  }
+
+  .tree-node {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+
+    .node-label {
+      flex: 1;
+    }
+  }
 </style>
+

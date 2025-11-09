@@ -3,6 +3,7 @@ package com.elexvx.acc.dto;
 public class SystemSettingDtos {
   public static class BrandSetting {
     public String name;
+    public String logoUrl;
   }
 
   public static class WatermarkSetting {
@@ -19,6 +20,7 @@ public class SystemSettingDtos {
 
   public static class UpdateBrandRequest {
     public String name;
+    public String logoUrl;
   }
 
   public static class UpdateWatermarkRequest {
