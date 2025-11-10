@@ -12,12 +12,16 @@ import com.elexvx.acc.repo.SysRolePermissionRepository;
 import com.elexvx.acc.repo.SysRoleRepository;
 import com.elexvx.acc.repo.SysUserRepository;
 import com.elexvx.acc.repo.SysUserRoleRepository;
+import com.elexvx.acc.logging.OperationLog;
+import com.elexvx.acc.logging.OperationLogType;
+import com.elexvx.acc.service.OperationLogService;
 import org.springframework.http.ResponseEntity;
 import com.elexvx.acc.common.ApiResponse;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
+import jakarta.servlet.http.HttpServletRequest;
 import java.time.LocalDateTime;
 import java.util.Base64;
 import java.util.Collections;
@@ -36,24 +40,27 @@ public class AuthController {
   private final SysRolePermissionRepository rolePermRepo;
   private final SysPermissionRepository permRepo;
   private final BCryptPasswordEncoder encoder = new BCryptPasswordEncoder();
+  private final OperationLogService operationLogService;
 
   public AuthController(SysUserRepository userRepo,
                         SysUserRoleRepository userRoleRepo,
                         SysRoleRepository roleRepo,
                         SysRolePermissionRepository rolePermRepo,
-                        SysPermissionRepository permRepo) {
+                        SysPermissionRepository permRepo,
+                        OperationLogService operationLogService) {
     this.userRepo = userRepo;
     this.userRoleRepo = userRoleRepo;
     this.roleRepo = roleRepo;
     this.rolePermRepo = rolePermRepo;
     this.permRepo = permRepo;
+    this.operationLogService = operationLogService;
   }
 
   public static class LoginRequest { public String username; public String userName; public String password; public String captchaToken; public String captchaCode; }
   public static class LoginResp { public String token; public String refreshToken; }
 
   @PostMapping("/login")
-  public ResponseEntity<ApiResponse<LoginResp>> login(@RequestBody LoginRequest req) {
+  public ResponseEntity<ApiResponse<LoginResp>> login(@RequestBody LoginRequest req, HttpServletRequest request) {
     String uname = (req.username != null && !req.username.isEmpty()) ? req.username : req.userName;
     SysUser u = userRepo.findByUsername(uname).orElse(null);
     if (u == null) {
@@ -66,6 +73,15 @@ public class AuthController {
       userRepo.save(u);
     }
     if (!encoder.matches(req.password, u.getPasswordHash())) {
+      operationLogService.record(
+          OperationLogType.LOGIN,
+          "登录失败",
+          "用户名或密码错误",
+          request,
+          null,
+          uname,
+          false,
+          "用户名或密码错误");
       return ResponseEntity.ok(ApiResponse.failure(401, "用户名或密码错误"));
     }
     StpUtil.login(u.getId());
@@ -73,10 +89,20 @@ public class AuthController {
     LoginResp resp = new LoginResp();
     resp.token = token;
     resp.refreshToken = "";
+    operationLogService.record(
+        OperationLogType.LOGIN,
+        "用户登录",
+        "登录成功",
+        request,
+        u.getId(),
+        u.getUsername(),
+        true,
+        null);
     return ResponseEntity.ok(ApiResponse.success(resp));
   }
 
   @PostMapping("/logout")
+  @OperationLog(value = "退出登录", type = OperationLogType.LOGOUT)
   public ResponseEntity<Void> logout() {
     StpUtil.logout();
     return ResponseEntity.noContent().build();

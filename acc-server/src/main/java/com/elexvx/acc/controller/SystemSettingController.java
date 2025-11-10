@@ -4,6 +4,8 @@ import cn.dev33.satoken.annotation.SaCheckPermission;
 import cn.dev33.satoken.stp.StpUtil;
 import com.elexvx.acc.common.ApiResponse;
 import com.elexvx.acc.dto.SystemSettingDtos.*;
+import com.elexvx.acc.logging.OperationLog;
+import com.elexvx.acc.logging.OperationLogType;
 import com.elexvx.acc.service.FileStorageService;
 import com.elexvx.acc.service.SystemSettingService;
 import org.springframework.http.ResponseEntity;
@@ -31,12 +33,14 @@ public class SystemSettingController {
 
   @GetMapping
   @SaCheckPermission("sys:setting:read")
+  @OperationLog(value = "查询系统设置", type = OperationLogType.QUERY)
   public ResponseEntity<ApiResponse<SystemSettingResponse>> adminSettings() {
     return ResponseEntity.ok(ApiResponse.success(systemSettingService.getAdminSettings()));
   }
 
   @PutMapping("/brand")
   @SaCheckPermission("sys:setting:brand")
+  @OperationLog(value = "更新品牌设置", type = OperationLogType.SETTING)
   public ResponseEntity<ApiResponse<BrandSetting>> updateBrand(@RequestBody UpdateBrandRequest req) {
     Long operator = StpUtil.getLoginIdAsLong();
     return ResponseEntity.ok(ApiResponse.success(systemSettingService.updateBrand(req, operator)));
@@ -44,6 +48,7 @@ public class SystemSettingController {
 
   @PostMapping("/brand/logo")
   @SaCheckPermission("sys:setting:brand")
+  @OperationLog(value = "上传品牌Logo", type = OperationLogType.SETTING)
   public ResponseEntity<ApiResponse<String>> uploadBrandLogo(@RequestParam("file") MultipartFile file) {
     String url = fileStorageService.store(file, "brand");
     return ResponseEntity.ok(ApiResponse.success(url));
@@ -51,6 +56,7 @@ public class SystemSettingController {
 
   @PutMapping("/watermark")
   @SaCheckPermission("sys:setting:watermark")
+  @OperationLog(value = "更新水印设置", type = OperationLogType.SETTING)
   public ResponseEntity<ApiResponse<WatermarkSetting>> updateWatermark(@RequestBody UpdateWatermarkRequest req) {
     Long operator = StpUtil.getLoginIdAsLong();
     return ResponseEntity.ok(ApiResponse.success(systemSettingService.updateWatermark(req, operator)));

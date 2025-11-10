@@ -48,7 +48,7 @@
 | permissions    | 字符串数组      | —         | 否   | 扁平权限标识（如 `sys:user:list`） |
 | createdAt      | 日期时间        | —         | 是   | 创建时间                           |
 
-- 数据表映射：`sys_user`、`sys_user_tag`、`sys_user_role`、`sys_role`、`sys_role_permission`、`sys_permission`
+- 数据表映射：`sys_user`、`sys_user_role`、`sys_role`、`sys_role_permission`、`sys_permission`
 - 权限标识（最小权限）：
   - `POST /auth/login`、`GET /auth/captcha`：匿名
   - `POST /auth/logout`、`GET /auth/me`：`sys:auth:session`
@@ -83,7 +83,7 @@
 | oldPassword | 字符串 | ≤128 | 是   | 旧密码                     |
 | newPassword | 字符串 | ≤128 | 是   | 新密码（服务端做强度校验） |
 
-- 数据表映射：`sys_user`、`sys_user_tag`
+- 数据表映射：`sys_user`
 - 权限标识：`sys:profile:read`（GET）、`sys:profile:update`、`sys:profile:password`、`sys:profile:avatar`、`sys:profile:tags`
 
 ------

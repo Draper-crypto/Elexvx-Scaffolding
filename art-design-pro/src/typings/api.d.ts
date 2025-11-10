@@ -166,6 +166,70 @@ declare namespace Api {
     }
   }
 
+  /** 操作日志 */
+  namespace OperationLog {
+    interface Item {
+      id: number
+      userId?: number
+      username?: string
+      actionType: string
+      actionTypeLabel: string
+      actionSummary: string
+      actionDetail?: string
+      colorHex?: string
+      tagType?: string
+      requestMethod?: string
+      requestUri?: string
+      requestParams?: string
+      ipAddress?: string
+      userAgent?: string
+      success: boolean
+      errorMessage?: string
+      createdAt?: string
+    }
+
+    interface ListResponse extends Api.Common.PaginatedResponse<Item> {}
+
+    type QueryParams = Partial<{
+      current: number
+      size: number
+      username: string
+      actionType: string
+      success: boolean | ''
+    }>
+
+    interface TypeMeta {
+      actionType: string
+      label: string
+      colorHex: string
+      tagType: string
+    }
+  }
+
+  /** 插件管理 */
+  namespace Plugin {
+    interface Item {
+      pluginKey: string
+      name: string
+      version?: string
+      description?: string
+      status: 'ENABLED' | 'DISABLED' | 'NOT_INSTALLED'
+      installed: boolean
+      available: boolean
+      pluginPath?: string
+      manifestPath?: string
+      backendEntry?: string
+      frontendEntry?: string
+      databaseScripts: string[]
+      dataPath?: string
+      installedAt?: string
+      updatedAt?: string
+      lastLoadedAt?: string
+      lastUnloadedAt?: string
+      manifestError?: string | null
+    }
+  }
+
   /** 用户个人中心 */
   namespace Profile {
     interface Detail {

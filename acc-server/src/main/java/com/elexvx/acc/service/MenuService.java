@@ -57,6 +57,8 @@ public class MenuService {
   @PostConstruct
   public void initBuiltinMenus() {
     ensureChangeLogMenuExists();
+    ensureOperationLogMenuExists();
+    ensurePluginMenuExists();
   }
 
   public List<MenuTree> tree() {
@@ -292,6 +294,68 @@ public class MenuService {
     menu.setCreatedAt(now);
     menu.setUpdatedAt(now);
     menuRepo.save(menu);
+  }
+
+  private void ensureOperationLogMenuExists() {
+    final String routePath = "/system/operation-log";
+    if (menuRepo.findByRoutePath(routePath).isPresent()) {
+      return;
+    }
+    SysMenu menu = new SysMenu();
+    menu.setMenuType(2);
+    menu.setParentId(resolveSystemParentId());
+    menu.setMenuName("操作日志");
+    menu.setRoutePath(routePath);
+    menu.setComponentPath("/system/operation-log");
+    menu.setPermissionHint("sys:operation-log:list");
+    menu.setIcon("&#xe7c1;");
+    menu.setUseIconPicker(0);
+    menu.setOrderNum(80);
+    menu.setEnabled(1);
+    menu.setCachePage(1);
+    menu.setHiddenMenu(0);
+    menu.setEmbedded(0);
+    menu.setShowBadge(0);
+    menu.setAffix(0);
+    menu.setHideTab(0);
+    menu.setFullScreen(0);
+    LocalDateTime now = LocalDateTime.now();
+    menu.setCreatedAt(now);
+    menu.setUpdatedAt(now);
+    menuRepo.save(menu);
+  }
+
+  private void ensurePluginMenuExists() {
+    final String routePath = "/system/plugins";
+    if (menuRepo.findByRoutePath(routePath).isPresent()) {
+      return;
+    }
+    SysMenu menu = new SysMenu();
+    menu.setMenuType(2);
+    menu.setParentId(resolveSystemParentId());
+    menu.setMenuName("插件管理");
+    menu.setRoutePath(routePath);
+    menu.setComponentPath("/system/plugin");
+    menu.setPermissionHint("sys:plugin:list");
+    menu.setIcon("&#xe857;");
+    menu.setUseIconPicker(0);
+    menu.setOrderNum(81);
+    menu.setEnabled(1);
+    menu.setCachePage(1);
+    menu.setHiddenMenu(0);
+    menu.setEmbedded(0);
+    menu.setShowBadge(0);
+    menu.setAffix(0);
+    menu.setHideTab(0);
+    menu.setFullScreen(0);
+    LocalDateTime now = LocalDateTime.now();
+    menu.setCreatedAt(now);
+    menu.setUpdatedAt(now);
+    menuRepo.save(menu);
+  }
+
+  private Long resolveSystemParentId() {
+    return menuRepo.findByRoutePath("/system").map(SysMenu::getId).orElse(null);
   }
 
   private Boolean toBool(Integer v) { return v != null && v != 0; }

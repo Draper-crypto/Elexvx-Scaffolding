@@ -111,6 +111,8 @@ INSERT INTO `sys_menu` VALUES (4, 3, 2, '用户管理', '/system/user', '/system
 INSERT INTO `sys_menu` VALUES (5, 3, 2, '角色管理', '/system/role', '/system/role', NULL, NULL, NULL, 2, NULL, NULL, NULL, 1, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2025-11-07 20:55:06', '2025-11-07 20:55:06', NULL, NULL);
 INSERT INTO `sys_menu` VALUES (6, 3, 2, '菜单管理', '/system/menu', '/system/menu', NULL, NULL, NULL, 3, NULL, NULL, NULL, 1, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2025-11-07 20:55:06', '2025-11-07 20:55:06', NULL, NULL);
 INSERT INTO `sys_menu` VALUES (7, NULL, 2, '更新日志', '/change/log', '/change/log', 'sys:changelog:list', '&#xe712;', 0, 99, NULL, NULL, '', 1, 0, 0, 0, 0, 0, 0, 0, '2025-11-09 21:03:16', '2025-11-09 21:03:16', NULL, NULL);
+INSERT INTO `sys_menu` VALUES (8, 3, 2, '操作日志', '/system/operation-log', '/system/operation-log', 'sys:operation-log:list', '&#xe7c1;', 0, 80, NULL, NULL, NULL, 1, 1, 0, 0, 0, 0, 0, 0, '2025-11-09 21:03:16', '2025-11-09 21:03:16', NULL, NULL);
+INSERT INTO `sys_menu` VALUES (9, 3, 2, '插件管理', '/system/plugins', '/system/plugin', 'sys:plugin:list', '&#xe857;', 0, 81, NULL, NULL, NULL, 1, 1, 0, 0, 0, 0, 0, 0, '2025-11-09 21:03:16', '2025-11-09 21:03:16', NULL, NULL);
 
 -- ----------------------------
 -- Table structure for sys_menu_permission
@@ -132,32 +134,6 @@ CREATE TABLE `sys_menu_permission`  (
 -- Records of sys_menu_permission
 -- ----------------------------
 
--- ----------------------------
--- Table structure for sys_page
--- ----------------------------
-DROP TABLE IF EXISTS `sys_page`;
-CREATE TABLE `sys_page`  (
-  `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT,
-  `page_name` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL COMMENT '页面名称',
-  `route_path` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL COMMENT '路由地址',
-  `component_path` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL COMMENT '组件路径',
-  `permission_hint` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT '权限标识提示',
-  `enabled` int NULL DEFAULT NULL,
-  `cache_page` int NULL DEFAULT NULL,
-  `embedded` int NULL DEFAULT NULL,
-  `full_screen` int NULL DEFAULT NULL,
-  `hide_tab` int NULL DEFAULT NULL,
-  `affix` int NULL DEFAULT NULL,
-  `active_path` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT '激活路径',
-  `created_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  `updated_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  `created_by` bigint UNSIGNED NULL DEFAULT NULL,
-  `updated_by` bigint UNSIGNED NULL DEFAULT NULL,
-  PRIMARY KEY (`id`) USING BTREE,
-  UNIQUE INDEX `uk_page_route_path`(`route_path` ASC) USING BTREE
-) ENGINE = InnoDB AUTO_INCREMENT = 1 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci COMMENT = '页面管理' ROW_FORMAT = Dynamic;
-
--- ----------------------------
 -- Records of sys_page
 -- ----------------------------
 
@@ -210,6 +186,13 @@ INSERT INTO `sys_permission` VALUES (20, 'sys:menu:create', 'sys:menu:create', 1
 INSERT INTO `sys_permission` VALUES (21, 'sys:menu:update', 'sys:menu:update', 1, NULL, NULL, NULL, NULL, NULL, NULL, '2025-11-07 20:55:06', '2025-11-07 20:55:06', NULL, NULL);
 INSERT INTO `sys_permission` VALUES (22, 'sys:menu:delete', 'sys:menu:delete', 1, NULL, NULL, NULL, NULL, NULL, NULL, '2025-11-07 20:55:06', '2025-11-07 20:55:06', NULL, NULL);
 INSERT INTO `sys_permission` VALUES (23, 'sys:menu:bindperms', 'sys:menu:bindperms', 1, NULL, NULL, NULL, NULL, NULL, NULL, '2025-11-07 20:55:06', '2025-11-07 20:55:06', NULL, NULL);
+INSERT INTO `sys_permission` VALUES (24, 'sys:operation-log:list', 'sys:operation-log:list', 1, NULL, NULL, NULL, NULL, NULL, NULL, '2025-11-09 21:05:00', '2025-11-09 21:05:00', NULL, NULL);
+INSERT INTO `sys_permission` VALUES (25, 'sys:plugin:list', 'sys:plugin:list', 1, NULL, NULL, NULL, NULL, NULL, NULL, '2025-11-09 21:05:00', '2025-11-09 21:05:00', NULL, NULL);
+INSERT INTO `sys_permission` VALUES (26, 'sys:plugin:load', 'sys:plugin:load', 1, NULL, NULL, NULL, NULL, NULL, NULL, '2025-11-09 21:05:00', '2025-11-09 21:05:00', NULL, NULL);
+INSERT INTO `sys_permission` VALUES (27, 'sys:plugin:unload', 'sys:plugin:unload', 1, NULL, NULL, NULL, NULL, NULL, NULL, '2025-11-09 21:05:00', '2025-11-09 21:05:00', NULL, NULL);
+INSERT INTO `sys_permission` VALUES (28, 'sys:setting:read', 'sys:setting:read', 1, NULL, NULL, NULL, NULL, NULL, NULL, '2025-11-09 21:05:00', '2025-11-09 21:05:00', NULL, NULL);
+INSERT INTO `sys_permission` VALUES (29, 'sys:setting:brand', 'sys:setting:brand', 1, NULL, NULL, NULL, NULL, NULL, NULL, '2025-11-09 21:05:00', '2025-11-09 21:05:00', NULL, NULL);
+INSERT INTO `sys_permission` VALUES (30, 'sys:setting:watermark', 'sys:setting:watermark', 1, NULL, NULL, NULL, NULL, NULL, NULL, '2025-11-09 21:05:00', '2025-11-09 21:05:00', NULL, NULL);
 
 -- ----------------------------
 -- Table structure for sys_role
@@ -298,6 +281,13 @@ INSERT INTO `sys_role_permission` VALUES (20, 1, 20, '2025-11-08 04:55:06');
 INSERT INTO `sys_role_permission` VALUES (21, 1, 21, '2025-11-08 04:55:06');
 INSERT INTO `sys_role_permission` VALUES (22, 1, 22, '2025-11-08 04:55:06');
 INSERT INTO `sys_role_permission` VALUES (23, 1, 23, '2025-11-08 04:55:06');
+INSERT INTO `sys_role_permission` VALUES (24, 1, 24, '2025-11-09 21:05:00');
+INSERT INTO `sys_role_permission` VALUES (25, 1, 25, '2025-11-09 21:05:00');
+INSERT INTO `sys_role_permission` VALUES (26, 1, 26, '2025-11-09 21:05:00');
+INSERT INTO `sys_role_permission` VALUES (27, 1, 27, '2025-11-09 21:05:00');
+INSERT INTO `sys_role_permission` VALUES (28, 1, 28, '2025-11-09 21:05:00');
+INSERT INTO `sys_role_permission` VALUES (29, 1, 29, '2025-11-09 21:05:00');
+INSERT INTO `sys_role_permission` VALUES (30, 1, 30, '2025-11-09 21:05:00');
 
 -- ----------------------------
 -- Table structure for sys_user
@@ -357,20 +347,56 @@ CREATE TABLE `sys_user_role`  (
 INSERT INTO `sys_user_role` VALUES (10, 1, 1, '2025-11-09 23:16:01');
 
 -- ----------------------------
--- Table structure for sys_user_tag
+-- Table structure for sys_operation_log
 -- ----------------------------
-DROP TABLE IF EXISTS `sys_user_tag`;
-CREATE TABLE `sys_user_tag`  (
-  `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT,
-  `user_id` bigint UNSIGNED NOT NULL,
-  `tag` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL,
+DROP TABLE IF EXISTS `sys_operation_log`;
+CREATE TABLE `sys_operation_log`  (
+  `id` bigint NOT NULL AUTO_INCREMENT,
+  `action_type` varchar(40) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL,
+  `action_name` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL,
+  `action_summary` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL,
+  `action_detail` varchar(1000) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL,
+  `user_id` bigint NULL DEFAULT NULL,
+  `username` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL,
+  `request_method` varchar(10) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL,
+  `request_uri` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL,
+  `request_params` varchar(1000) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL,
+  `ip_address` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL,
+  `user_agent` varchar(512) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL,
+  `color_hex` varchar(32) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL,
+  `tag_type` varchar(20) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL,
+  `success_flag` tinyint NULL DEFAULT NULL,
+  `error_message` varchar(1000) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL,
+  `created_at` datetime NOT NULL,
   PRIMARY KEY (`id`) USING BTREE,
-  UNIQUE INDEX `uk_user_tag`(`user_id` ASC, `tag` ASC) USING BTREE,
-  CONSTRAINT `fk_user_tag_user` FOREIGN KEY (`user_id`) REFERENCES `sys_user` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
-) ENGINE = InnoDB AUTO_INCREMENT = 1 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci COMMENT = '用户标签' ROW_FORMAT = Dynamic;
+  INDEX `idx_operation_log_type`(`action_type` ASC) USING BTREE,
+  INDEX `idx_operation_log_user`(`user_id` ASC) USING BTREE
+) ENGINE = InnoDB CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci ROW_FORMAT = Dynamic;
 
 -- ----------------------------
--- Records of sys_user_tag
+-- Table structure for sys_plugin
 -- ----------------------------
+DROP TABLE IF EXISTS `sys_plugin`;
+CREATE TABLE `sys_plugin`  (
+  `id` bigint NOT NULL AUTO_INCREMENT,
+  `plugin_key` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL,
+  `plugin_name` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL,
+  `version` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL,
+  `description` varchar(500) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL,
+  `status` varchar(30) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL,
+  `plugin_path` varchar(500) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL,
+  `manifest_path` varchar(500) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL,
+  `backend_entry` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL,
+  `frontend_entry` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL,
+  `database_scripts` text CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL,
+  `data_path` varchar(500) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL,
+  `created_at` datetime NULL DEFAULT NULL,
+  `updated_at` datetime NULL DEFAULT NULL,
+  `installed_at` datetime NULL DEFAULT NULL,
+  `last_loaded_at` datetime NULL DEFAULT NULL,
+  `last_unloaded_at` datetime NULL DEFAULT NULL,
+  PRIMARY KEY (`id`) USING BTREE,
+  UNIQUE INDEX `uk_plugin_key`(`plugin_key` ASC) USING BTREE
+) ENGINE = InnoDB CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci ROW_FORMAT = Dynamic;
 
 SET FOREIGN_KEY_CHECKS = 1;
