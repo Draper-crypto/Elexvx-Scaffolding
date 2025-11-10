@@ -9,3 +9,11 @@ dist-ssr
 src/types/auto-imports.d.ts
 src/types/components.d.ts
 .auto-import.json
+
+# Caches & debug logs
+.vite
+.cache
+.eslintcache
+pnpm-debug.log*
+npm-debug.log*
+yarn-debug.log*

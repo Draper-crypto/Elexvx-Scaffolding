@@ -1,0 +1,42 @@
+# Global ignore rules for the repository
+
+# OS-specific junk
+.DS_Store
+Thumbs.db
+
+# IDE/editor folders
+.idea/
+.vscode/
+*.swp
+
+# Logs
+*.log
+logs/
+
+# --- Frontend (art-design-pro) ---
+art-design-pro/node_modules/
+art-design-pro/dist/
+art-design-pro/dist-ssr/
+art-design-pro/.vite/
+art-design-pro/.cache/
+art-design-pro/.eslintcache
+art-design-pro/pnpm-debug.log*
+art-design-pro/npm-debug.log*
+art-design-pro/yarn-debug.log*
+
+# Env overrides (keep env.example if any)
+art-design-pro/.env.local
+art-design-pro/.env.*.local
+
+# Auto-generated types
+art-design-pro/src/types/auto-imports.d.ts
+art-design-pro/src/types/components.d.ts
+art-design-pro/.auto-import.json
+
+# --- Backend (acc-server) ---
+acc-server/target/
+acc-server/*.log
+
+# Runtime uploads (generated at runtime)
+acc-server/uploads/
+

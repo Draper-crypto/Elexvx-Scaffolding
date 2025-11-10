@@ -1,19 +1,19 @@
 <template>
   <ElDialog
     v-model="dialogVisible"
-    :title="dialogType === 'add' ? 'Ìí¼ÓÓÃ»§' : '±à¼­ÓÃ»§'"
+    :title="dialogType === 'add' ? 'æ–°å¢ç”¨æˆ·' : 'ç¼–è¾‘ç”¨æˆ·'"
     width="30%"
     align-center
   >
     <ElForm ref="formRef" :model="formData" :rules="rules" label-width="80px">
-      <ElFormItem label="ÓÃ»§Ãû" prop="username">
-        <ElInput v-model="formData.username" placeholder="ÇëÊäÈëÓÃ»§Ãû" />
+      <ElFormItem label="ç”¨æˆ·å" prop="username">
+        <ElInput v-model="formData.username" placeholder="è¯·è¾“å…¥ç”¨æˆ·å" />
       </ElFormItem>
-      <ElFormItem label="ÊÖ»úºÅ" prop="phone">
-        <ElInput v-model="formData.phone" placeholder="ÇëÊäÈëÊÖ»úºÅ" />
+      <ElFormItem label="æ‰‹æœºå·" prop="phone">
+        <ElInput v-model="formData.phone" placeholder="è¯·è¾“å…¥æ‰‹æœºå·" />
       </ElFormItem>
-      <ElFormItem label="ĞÔ±ğ" prop="gender">
-        <ElSelect v-model="formData.gender" placeholder="ÇëÑ¡ÔñĞÔ±ğ">
+      <ElFormItem label="æ€§åˆ«" prop="gender">
+        <ElSelect v-model="formData.gender" placeholder="è¯·é€‰æ‹©æ€§åˆ«">
           <ElOption
             v-for="item in genderOptions"
             :key="item.value"
@@ -22,7 +22,7 @@
           />
         </ElSelect>
       </ElFormItem>
-      <ElFormItem label="½ÇÉ«" prop="roleIds">
+      <ElFormItem label="è§’è‰²" prop="roleIds">
         <ElSelect v-model="formData.roleIds" multiple>
           <ElOption
             v-for="role in roleList"
@@ -35,8 +35,8 @@
     </ElForm>
     <template #footer>
       <div class="dialog-footer">
-        <ElButton @click="dialogVisible = false">È¡Ïû</ElButton>
-        <ElButton type="primary" @click="handleSubmit">Ìá½»</ElButton>
+        <ElButton @click="dialogVisible = false">å–æ¶ˆ</ElButton>
+        <ElButton type="primary" @click="handleSubmit">æäº¤</ElButton>
       </div>
     </template>
   </ElDialog>
@@ -65,8 +65,8 @@ const props = defineProps<Props>()
 const emit = defineEmits<Emits>()
 
 const genderOptions = [
-  { label: 'ÄĞ', value: '1' },
-  { label: 'Å®', value: '2' }
+  { label: 'ç”·', value: '1' },
+  { label: 'å¥³', value: '2' }
 ]
 
 const roleList = ref<any[]>([])
@@ -89,15 +89,15 @@ const formData = reactive({
 
 const rules: FormRules = {
   username: [
-    { required: true, message: 'ÇëÊäÈëÓÃ»§Ãû', trigger: 'blur' },
-    { min: 2, max: 20, message: 'ÓÃ»§Ãû³¤¶ÈÔÚ 2 µ½ 20 Ö®¼ä', trigger: 'blur' }
+    { required: true, message: 'è¯·è¾“å…¥ç”¨æˆ·å', trigger: 'blur' },
+    { min: 2, max: 20, message: 'ç”¨æˆ·åé•¿åº¦éœ€åœ¨ 2 åˆ° 20 ä¸ªå­—ç¬¦ä¹‹é—´', trigger: 'blur' }
   ],
   phone: [
-    { required: true, message: 'ÇëÊäÈëÊÖ»úºÅ', trigger: 'blur' },
-    { pattern: /^1[3-9]\d{9}$/, message: 'ÇëÊäÈëºÏ·¨ÊÖ»úºÅ', trigger: 'blur' }
+    { required: true, message: 'è¯·è¾“å…¥æ‰‹æœºå·', trigger: 'blur' },
+    { pattern: /^1[3-9]\d{9}$/, message: 'è¯·è¾“å…¥åˆæ³•æ‰‹æœºå·', trigger: 'blur' }
   ],
-  gender: [{ required: true, message: 'ÇëÑ¡ÔñĞÔ±ğ', trigger: 'change' }],
-  roleIds: [{ required: true, message: 'ÇëÑ¡Ôñ½ÇÉ«', trigger: 'change' }]
+  gender: [{ required: true, message: 'è¯·é€‰æ‹©æ€§åˆ«', trigger: 'change' }],
+  roleIds: [{ required: true, message: 'è¯·é€‰æ‹©è§’è‰²', trigger: 'change' }]
 }
 
 const initFormData = () => {
@@ -136,7 +136,7 @@ onMounted(async () => {
     const res: any = await fetchGetRoleList({ current: 1, size: 100 })
     roleList.value = Array.isArray(res.records) ? res.records : []
   } catch (error) {
-    console.error('[UserDialog] ¼ÓÔØ½ÇÉ«Ê§°Ü', error)
+    console.error('[UserDialog] åŠ è½½è§’è‰²å¤±è´¥', error)
   }
 })
 
@@ -152,7 +152,7 @@ const handleSubmit = async () => {
       gender: Number(formData.gender || 0),
       roleIds: Array.from(new Set(formData.roleIds))
     }
-    ElMessage.success(dialogType.value === 'add' ? 'Ìí¼Ó³É¹¦' : '¸üĞÂ³É¹¦')
+    ElMessage.success(dialogType.value === 'add' ? 'æ·»åŠ æˆåŠŸ' : 'æ›´æ–°æˆåŠŸ')
     dialogVisible.value = false
     emit('submit', payload)
   })
