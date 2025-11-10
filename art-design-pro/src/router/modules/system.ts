@@ -65,6 +65,26 @@ export const systemRoutes: AppRouteRecord = {
         keepAlive: true,
         roles: ['R_SUPER']
       }
+    },
+    {
+      path: 'operation-log',
+      name: 'OperationLog',
+      component: '/system/operation-log',
+      meta: {
+        title: 'menus.system.operationLog',
+        keepAlive: true,
+        roles: ['R_SUPER']
+      }
+    },
+    {
+      path: 'plugins',
+      name: 'PluginManager',
+      component: '/system/plugin',
+      meta: {
+        title: 'menus.system.plugin',
+        keepAlive: true,
+        roles: ['R_SUPER']
+      }
     }
   ]
 }
