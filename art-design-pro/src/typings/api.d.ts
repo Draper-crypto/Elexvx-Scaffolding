@@ -59,6 +59,12 @@ declare namespace Api {
       nickname?: string
       displayName?: string
     }
+
+    /** 登录页角色选项 */
+    interface RoleOption {
+      code: string
+      name: string
+    }
   }
 
   /** 系统管理类型 */

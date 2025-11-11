@@ -23,3 +23,12 @@ export function fetchGetUserInfo() {
     url: '/api/auth/me'
   })
 }
+
+/**
+ * 获取公开的角色选项（登录页使用）
+ */
+export function fetchPublicRoleOptions() {
+  return request.get<Array<{ code: string; name: string }>>({
+    url: '/api/auth/public/roles'
+  })
+}

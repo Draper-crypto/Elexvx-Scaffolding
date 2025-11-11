@@ -64,9 +64,9 @@ public class AdminRoleController {
   @PutMapping("/{id}/menus")
   @SaCheckPermission("sys:role:setmenus")
   @OperationLog(value = "分配角色菜单", type = OperationLogType.UPDATE, detail = "角色ID={{id}}")
-  public ResponseEntity<Void> setMenus(@PathVariable("id") Long id, @RequestBody AssignRoleMenusRequest req) {
+  public ResponseEntity<ApiResponse<Void>> setMenus(@PathVariable("id") Long id, @RequestBody AssignRoleMenusRequest req) {
     roleService.setMenus(id, req);
-    return ResponseEntity.noContent().build();
+    return ResponseEntity.ok(ApiResponse.success(null));
   }
 
   @GetMapping("/{id}/menus")
@@ -79,9 +79,9 @@ public class AdminRoleController {
   @PutMapping("/{id}/permissions")
   @SaCheckPermission("sys:role:setperms")
   @OperationLog(value = "分配角色权限", type = OperationLogType.UPDATE, detail = "角色ID={{id}}")
-  public ResponseEntity<Void> setPermissions(@PathVariable("id") Long id, @RequestBody AssignRolePermissionsRequest req) {
+  public ResponseEntity<ApiResponse<Void>> setPermissions(@PathVariable("id") Long id, @RequestBody AssignRolePermissionsRequest req) {
     roleService.setPermissions(id, req);
-    return ResponseEntity.noContent().build();
+    return ResponseEntity.ok(ApiResponse.success(null));
   }
 
   @GetMapping("/{id}/permissions")

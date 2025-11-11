@@ -44,12 +44,12 @@ public class AdminMenuController {
   @DeleteMapping("/{id}")
   @SaCheckPermission("sys:menu:delete")
   @OperationLog(value = "删除菜单", type = OperationLogType.DELETE, detail = "菜单ID={{id}}")
-  public ResponseEntity<Void> delete(@PathVariable("id") Long id) { menuService.delete(id); return ResponseEntity.noContent().build(); }
+  public ResponseEntity<ApiResponse<Void>> delete(@PathVariable("id") Long id) { menuService.delete(id); return ResponseEntity.ok(ApiResponse.success(null)); }
 
   @PutMapping("/{id}/permissions")
   @SaCheckPermission("sys:menu:bindperms")
   @OperationLog(value = "绑定菜单权限", type = OperationLogType.UPDATE, detail = "菜单ID={{id}}")
-  public ResponseEntity<Void> bindPermissions(@PathVariable("id") Long id, @RequestBody BindMenuPermissionsRequest req) { menuService.bindPermissions(id, req); return ResponseEntity.noContent().build(); }
+  public ResponseEntity<ApiResponse<Void>> bindPermissions(@PathVariable("id") Long id, @RequestBody BindMenuPermissionsRequest req) { menuService.bindPermissions(id, req); return ResponseEntity.ok(ApiResponse.success(null)); }
 
   @PostMapping("/{id}/auths")
   @SaCheckPermission("sys:menu:auth:create")
@@ -70,9 +70,9 @@ public class AdminMenuController {
   @DeleteMapping("/{id}/auths/{authId}")
   @SaCheckPermission("sys:menu:auth:delete")
   @OperationLog(value = "删除菜单按钮权限", type = OperationLogType.DELETE, detail = "菜单ID={{id}},权限ID={{authId}}")
-  public ResponseEntity<Void> deleteAuth(@PathVariable("id") Long id, @PathVariable("authId") Long authId) {
+  public ResponseEntity<ApiResponse<Void>> deleteAuth(@PathVariable("id") Long id, @PathVariable("authId") Long authId) {
     menuService.deleteAuth(id, authId);
-    return ResponseEntity.noContent().build();
+    return ResponseEntity.ok(ApiResponse.success(null));
   }
 
   // 初始化演示菜单：仅当数据库为空时插入基础菜单

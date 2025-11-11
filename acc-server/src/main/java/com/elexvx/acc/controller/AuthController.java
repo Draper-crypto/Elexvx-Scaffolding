@@ -178,4 +178,25 @@ public class AuthController {
     resp.put("expireInSeconds", 180);
     return ResponseEntity.ok(ApiResponse.success(resp));
   }
+
+  /**
+   * 公开接口：返回系统中的角色选项（用于登录页下拉）
+   * 无需登录即可访问，仅返回角色代码与名称
+   */
+  @GetMapping("/public/roles")
+  public ResponseEntity<ApiResponse<List<Map<String, String>>>> publicRoleOptions() {
+    List<Map<String, String>> list = roleRepo.findAll().stream()
+        .filter(Objects::nonNull)
+        .map(r -> {
+          String code = r.getRoleCode() == null ? "" : r.getRoleCode().trim();
+          String name = r.getRoleName() == null ? code : r.getRoleName();
+          java.util.Map<String, String> m = new java.util.HashMap<>();
+          m.put("code", code);
+          m.put("name", name);
+          return m;
+        })
+        .filter(m -> m.get("code") != null && !m.get("code").isBlank())
+        .collect(java.util.stream.Collectors.toList());
+    return ResponseEntity.ok(ApiResponse.success(list));
+  }
 }

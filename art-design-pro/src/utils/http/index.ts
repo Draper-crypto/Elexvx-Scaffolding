@@ -66,10 +66,19 @@ axiosInstance.interceptors.request.use(
 /** 响应拦截器 */
 axiosInstance.interceptors.response.use(
   (response: AxiosResponse<Http.BaseResponse>) => {
-    const { code, msg } = response.data
-    if (code === ApiStatus.success) return response
+    // 兼容后端返回 204 No Content 或无统一响应包的成功场景
+    const httpStatus = response.status
+    const body = response.data as any
+    if (httpStatus === 204 || body == null) {
+      return response
+    }
+    const { code, msg } = body
+    if (code === ApiStatus.success || (httpStatus >= 200 && httpStatus < 300 && code == null)) {
+      // code 缺失但 HTTP 状态码为 2xx，视为成功
+      return response
+    }
     if (code === ApiStatus.unauthorized) handleUnauthorizedError(msg)
-    throw createHttpError(msg || $t('httpMsg.requestFailed'), code)
+    throw createHttpError(msg || $t('httpMsg.requestFailed'), code ?? httpStatus)
   },
   (error) => {
     if (error.response?.status === ApiStatus.unauthorized) handleUnauthorizedError()

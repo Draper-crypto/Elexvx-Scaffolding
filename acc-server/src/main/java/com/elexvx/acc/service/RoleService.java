@@ -85,13 +85,24 @@ public class RoleService {
 
   @Transactional
   public void setMenus(Long id, AssignRoleMenusRequest req) {
+    // 先删除旧绑定并立即刷新，确保后续插入不会与未提交的旧记录发生唯一键冲突
     roleMenuRepo.deleteByRoleId(id);
+    roleMenuRepo.flush();
+
     if (req.menuIds != null) {
-      for (Long mid : req.menuIds) {
-        SysRoleMenu rm = new SysRoleMenu();
-        rm.setRoleId(id);
-        rm.setMenuId(mid);
-        roleMenuRepo.save(rm);
+      // 去重并过滤空值，避免重复插入触发 (role_id, menu_id) 唯一约束
+      List<SysRoleMenu> newBindings = req.menuIds.stream()
+          .filter(Objects::nonNull)
+          .distinct()
+          .map(mid -> {
+            SysRoleMenu rm = new SysRoleMenu();
+            rm.setRoleId(id);
+            rm.setMenuId(mid);
+            return rm;
+          })
+          .collect(Collectors.toList());
+      if (!newBindings.isEmpty()) {
+        roleMenuRepo.saveAll(newBindings);
       }
     }
   }
@@ -105,13 +116,23 @@ public class RoleService {
 
   @Transactional
   public void setPermissions(Long id, AssignRolePermissionsRequest req) {
+    // 删除旧绑定并刷新，避免未提交的旧记录导致唯一键冲突
     rolePermRepo.deleteByRoleId(id);
+    rolePermRepo.flush();
+
     if (req.permissionIds != null) {
-      for (Long pid : req.permissionIds) {
-        SysRolePermission rp = new SysRolePermission();
-        rp.setRoleId(id);
-        rp.setPermissionId(pid);
-        rolePermRepo.save(rp);
+      List<SysRolePermission> newBindings = req.permissionIds.stream()
+          .filter(Objects::nonNull)
+          .distinct()
+          .map(pid -> {
+            SysRolePermission rp = new SysRolePermission();
+            rp.setRoleId(id);
+            rp.setPermissionId(pid);
+            return rp;
+          })
+          .collect(Collectors.toList());
+      if (!newBindings.isEmpty()) {
+        rolePermRepo.saveAll(newBindings);
       }
     }
   }

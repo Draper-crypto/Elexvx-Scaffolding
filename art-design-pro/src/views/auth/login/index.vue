@@ -105,7 +105,7 @@
   import { getCssVar } from '@/utils/ui'
   import { useI18n } from 'vue-i18n'
   import { HttpError } from '@/utils/http/error'
-  import { fetchLogin, fetchGetUserInfo } from '@/api/auth'
+  import { fetchLogin, fetchGetUserInfo, fetchPublicRoleOptions } from '@/api/auth'
   import { ElNotification, type FormInstance, type FormRules } from 'element-plus'
   import { ROLE_OPTION_CACHE_KEY } from '@/constants/cacheKeys'
 
@@ -176,6 +176,8 @@
 
   onMounted(() => {
     syncRoleOptionsFromCache()
+    // 尝试从后端加载角色选项（公开接口）
+    loadRoleOptionsFromServer()
   })
 
   const dragVerify = ref()
@@ -202,6 +204,36 @@
   }))
 
   const loading = ref(false)
+
+  const loadRoleOptionsFromServer = async () => {
+    try {
+      const list = await fetchPublicRoleOptions()
+      if (Array.isArray(list) && list.length) {
+        const seen = new Set<string>()
+        const normalized = list
+          .map((item) => ({
+            code: typeof item.code === 'string' ? item.code.trim() : '',
+            name:
+              typeof item.name === 'string' && item.name.trim().length
+                ? item.name
+                : (typeof item.code === 'string' ? item.code.trim() : '')
+          }))
+          .filter((item) => {
+            if (!item.code || seen.has(item.code)) return false
+            seen.add(item.code)
+            return true
+          })
+        roleOptions.value = normalized
+        // 缓存到本地，供下次进入登录页使用
+        if (typeof window !== 'undefined') {
+          window.localStorage.setItem(ROLE_OPTION_CACHE_KEY, JSON.stringify(normalized))
+        }
+      }
+    } catch (error) {
+      // 后端不可用时保持默认回退选项，不报错以免影响登录体验
+      console.warn('[Login] 加载公开角色选项失败：', error)
+    }
+  }
 
   // 默认不填充任何账号信息，保持用户名与密码为空
 
