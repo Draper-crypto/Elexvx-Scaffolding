@@ -20,6 +20,14 @@ export function fetchGetRoleList(params: Api.SystemManage.RoleSearchParams) {
 // 获取菜单列表
 export function fetchGetMenuList() {
   return request.get<AppRouteRecord[]>({
-    url: '/api/v3/system/menus/simple'
+    url: '/api/v3/system/menus'
+  })
+}
+
+export function fetchUpdateUser(params: { id: number; gender?: number; phone?: string }) {
+  const { id, ...rest } = params
+  return request.put<void>({
+    url: `/api/user/${id}`,
+    params: rest
   })
 }

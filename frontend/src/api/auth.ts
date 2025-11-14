@@ -6,11 +6,14 @@ import request from '@/utils/http'
  * @returns 登录响应
  */
 export function fetchLogin(params: Api.Auth.LoginParams) {
-  return request.post<Api.Auth.LoginResponse>({
+  const mapped = {
+    username: (params as any).userName ?? (params as any).username,
+    password: (params as any).password,
+    roleCode: (params as any).roleCode
+  }
+  return request.post<{ token: string; user: any }>({
     url: '/api/auth/login',
-    params
-    // showSuccessMessage: true // 显示成功消息
-    // showErrorMessage: false // 不显示错误消息
+    params: mapped
   })
 }
 
@@ -19,11 +22,34 @@ export function fetchLogin(params: Api.Auth.LoginParams) {
  * @returns 用户信息
  */
 export function fetchGetUserInfo() {
-  return request.get<Api.Auth.UserInfo>({
-    url: '/api/user/info'
-    // 自定义请求头
-    // headers: {
-    //   'X-Custom-Header': 'your-custom-value'
-    // }
+  return request.get<any>({
+    url: '/api/auth/me'
+  })
+}
+
+export function fetchBootstrap() {
+  return request.get<{ user: any; menus: any[] }>({
+    url: '/api/auth/bootstrap'
+  })
+}
+
+export function fetchUserRoles(username: string) {
+  return request.get<{ roles: { id: number; roleName: string; roleCode: string; status: number }[] }>({
+    url: '/api/auth/roles',
+    params: { username }
+  })
+}
+
+export function fetchRegister(params: { username: string; password: string; gender?: number; phone?: string }) {
+  return request.post<{ id: number }>({
+    url: '/api/auth/register',
+    params
+  })
+}
+
+export function fetchForgotPassword(params: { username: string; newPassword: string; captchaToken?: string; captchaCode?: string }) {
+  return request.post<void>({
+    url: '/api/auth/forgot-password',
+    params
   })
 }

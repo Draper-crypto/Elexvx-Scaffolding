@@ -18,18 +18,7 @@
             @keyup.enter="handleSubmit"
             style="margin-top: 25px"
           >
-            <ElFormItem prop="account">
-              <ElSelect v-model="formData.account" @change="setupAccount">
-                <ElOption
-                  v-for="account in accounts"
-                  :key="account.key"
-                  :label="account.label"
-                  :value="account.key"
-                >
-                  <span>{{ account.label }}</span>
-                </ElOption>
-              </ElSelect>
-            </ElFormItem>
+            
             <ElFormItem prop="username">
               <ElInput
                 class="custom-height"
@@ -46,6 +35,21 @@
                 autocomplete="off"
                 show-password
               />
+            </ElFormItem>
+            <ElFormItem prop="roleCode">
+              <ElSelect
+                class="w-full custom-height"
+                v-model="formData.roleCode"
+                placeholder="请选择角色"
+                :disabled="rolesLoading || roleOptions.length === 0"
+              >
+                <ElOption
+                  v-for="r in roleOptions"
+                  :key="r.roleCode"
+                  :label="r.roleName"
+                  :value="r.roleCode"
+                />
+              </ElSelect>
             </ElFormItem>
 
             <!-- 推拽验证 -->
@@ -113,9 +117,10 @@
   import { getCssVar } from '@/utils/ui'
   import { useI18n } from 'vue-i18n'
   import { HttpError } from '@/utils/http/error'
-  import { fetchLogin, fetchGetUserInfo } from '@/api/auth'
+  import { fetchLogin, fetchBootstrap, fetchUserRoles } from '@/api/auth'
   import { ElNotification, type FormInstance, type FormRules } from 'element-plus'
   import { useSettingStore } from '@/store/modules/setting'
+  import { useMenuStore } from '@/store/modules/menu'
 
   defineOptions({ name: 'Login' })
 
@@ -129,39 +134,7 @@
     formKey.value++
   })
 
-  type AccountKey = 'super' | 'admin' | 'user'
-
-  export interface Account {
-    key: AccountKey
-    label: string
-    userName: string
-    password: string
-    roles: string[]
-  }
-
-  const accounts = computed<Account[]>(() => [
-    {
-      key: 'super',
-      label: t('login.roles.super'),
-      userName: 'Super',
-      password: '123456',
-      roles: ['R_SUPER']
-    },
-    {
-      key: 'admin',
-      label: t('login.roles.admin'),
-      userName: 'Admin',
-      password: '123456',
-      roles: ['R_ADMIN']
-    },
-    {
-      key: 'user',
-      label: t('login.roles.user'),
-      userName: 'User',
-      password: '123456',
-      roles: ['R_USER']
-    }
-  ])
+  
 
   const dragVerify = ref()
 
@@ -174,30 +147,46 @@
   const formRef = ref<FormInstance>()
 
   const formData = reactive({
-    account: '',
     username: '',
     password: '',
+    roleCode: '',
     rememberPassword: true
   })
+  const roleOptions = ref<{ roleName: string; roleCode: string }[]>([])
+  const rolesLoading = ref(false)
+  let rolesLoadTimer: any = null
+  const loadRoles = async () => {
+    formData.roleCode = ''
+    roleOptions.value = []
+    if (!formData.username) return
+    rolesLoading.value = true
+    try {
+      const { roles } = await fetchUserRoles(formData.username)
+      roleOptions.value = (roles || []).map((r: any) => ({ roleName: r.roleName, roleCode: r.roleCode }))
+    } finally {
+      rolesLoading.value = false
+    }
+  }
+  watch(
+    () => formData.username,
+    (v, ov) => {
+      if (!v || v === ov) return
+      if (rolesLoadTimer) clearTimeout(rolesLoadTimer)
+      rolesLoadTimer = setTimeout(loadRoles, 300)
+    }
+  )
 
   const rules = computed<FormRules>(() => ({
     username: [{ required: true, message: t('login.placeholder.username'), trigger: 'blur' }],
-    password: [{ required: true, message: t('login.placeholder.password'), trigger: 'blur' }]
+    password: [{ required: true, message: t('login.placeholder.password'), trigger: 'blur' }],
+    roleCode: [{ required: true, message: '请选择角色', trigger: 'change' }]
   }))
 
   const loading = ref(false)
 
-  onMounted(() => {
-    setupAccount('super')
-  })
+  onMounted(() => {})
 
-  // 设置账号
-  const setupAccount = (key: AccountKey) => {
-    const selectedAccount = accounts.value.find((account: Account) => account.key === key)
-    formData.account = key
-    formData.username = selectedAccount?.userName ?? ''
-    formData.password = selectedAccount?.password ?? ''
-  }
+  
 
   // 登录
   const handleSubmit = async () => {
@@ -217,12 +206,9 @@
       loading.value = true
 
       // 登录请求
-      const { username, password } = formData
+      const { username, password, roleCode } = formData
 
-      const { token, refreshToken } = await fetchLogin({
-        userName: username,
-        password
-      })
+      const { token, user } = await fetchLogin({ userName: username, password, roleCode })
 
       // 验证token
       if (!token) {
@@ -230,9 +216,27 @@
       }
 
       // 存储token和用户信息
-      userStore.setToken(token, refreshToken)
-      const userInfo = await fetchGetUserInfo()
-      userStore.setUserInfo(userInfo)
+      userStore.setToken(token)
+      let raw: any = user || null
+      let boot: any = null
+      try {
+        boot = await fetchBootstrap()
+        raw = raw || boot.user
+      } catch {}
+      const roleCodes = Array.isArray((raw as any)?.roles)
+        ? ((raw as any).roles as any[]).map((r: any) => r?.roleCode || r).map((c: string) => (c === 'ADMIN' ? 'R_ADMIN' : c === 'USER' ? 'R_USER' : c))
+        : []
+      userStore.setUserInfo({ ...(raw as any), roles: roleCodes })
+      if (Array.isArray((raw as any)?.permissions)) {
+        userStore.setPermissions((raw as any).permissions as string[])
+      } else {
+        userStore.setPermissions([])
+      }
+      if (boot && Array.isArray((boot as any).menus)) {
+        const menuStore = useMenuStore()
+        menuStore.setMenuList((boot as any).menus || [])
+        menuStore.setHomePath('/profile')
+      }
       userStore.setLoginStatus(true)
 
       // 登录成功处理
@@ -277,7 +281,4 @@
 </style>
 
 <style lang="scss" scoped>
-  :deep(.el-select__wrapper) {
-    height: 40px !important;
-  }
 </style>
