@@ -40,7 +40,7 @@
                 class="w-full custom-height"
                 v-model="formData.roleCode"
                 placeholder="请选择角色"
-                :disabled="rolesLoading || roleOptions.length === 0"
+                :disabled="rolesLoading"
               >
                 <ElOption
                   v-for="r in roleOptions"
@@ -163,6 +163,8 @@
         roleName: r.roleName,
         roleCode: r.roleCode
       }))
+    } catch (e) {
+      roleOptions.value = []
     } finally {
       rolesLoading.value = false
     }
@@ -179,7 +181,10 @@
   const rules = computed<FormRules>(() => ({
     username: [{ required: true, message: t('login.placeholder.username'), trigger: 'blur' }],
     password: [{ required: true, message: t('login.placeholder.password'), trigger: 'blur' }],
-    roleCode: [{ required: true, message: '请选择角色', trigger: 'change' }]
+    roleCode:
+      roleOptions.value.length > 0
+        ? [{ required: true, message: '请选择角色', trigger: 'change' }]
+        : []
   }))
 
   const loading = ref(false)
@@ -226,12 +231,10 @@
             .map((r: any) => r?.roleCode || r)
             .map((c: string) => (c === 'ADMIN' ? 'R_ADMIN' : c === 'USER' ? 'R_USER' : c))
         : []
-      userStore.setUserInfo({ ...(raw as any), roles: roleCodes })
-      if (Array.isArray((raw as any)?.permissions)) {
-        userStore.setPermissions((raw as any).permissions as string[])
-      } else {
-        userStore.setPermissions([])
-      }
+      const buttons = Array.isArray((raw as any)?.permissions)
+        ? ((raw as any).permissions as string[])
+        : []
+      userStore.setUserInfo({ ...(raw as any), roles: roleCodes, buttons })
       if (boot && Array.isArray((boot as any).menus)) {
         const menuStore = useMenuStore()
         menuStore.setMenuList((boot as any).menus || [])

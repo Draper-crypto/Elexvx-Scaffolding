@@ -50,7 +50,7 @@
 
   interface Emits {
     (e: 'update:visible', value: boolean): void
-    (e: 'submit'): void
+    (e: 'submit', payload: { id?: number; gender: number | string; phone: string }): void
   }
 
   const props = defineProps<Props>()
@@ -136,7 +136,7 @@
       if (valid) {
         ElMessage.success(dialogType.value === 'add' ? '添加成功' : '更新成功')
         dialogVisible.value = false
-        emit('submit')
+        emit('submit', { gender: formData.gender, phone: formData.phone })
       }
     })
   }

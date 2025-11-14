@@ -66,12 +66,14 @@ declare namespace Api {
     interface LoginParams {
       userName: string
       password: string
+      roleCode?: string
     }
 
     /** 登录响应 */
     interface LoginResponse {
       token: string
       refreshToken: string
+      user: UserInfo
     }
 
     /** 用户信息 */
