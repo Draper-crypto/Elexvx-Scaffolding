@@ -14,8 +14,8 @@
       </ElFormItem>
       <ElFormItem label="性别" prop="gender">
         <ElSelect v-model="formData.gender">
-          <ElOption label="男" value="1" />
-          <ElOption label="女" value="2" />
+          <ElOption label="男" value="男" />
+          <ElOption label="女" value="女" />
         </ElSelect>
       </ElFormItem>
       <ElFormItem label="角色" prop="role">
@@ -39,7 +39,7 @@
 </template>
 
 <script setup lang="ts">
-  import { fetchGetRoleList } from '@/api/system-manage'
+  import { ROLE_LIST_DATA } from '@/mock/temp/formData'
   import type { FormInstance, FormRules } from 'element-plus'
 
   interface Props {
@@ -50,21 +50,14 @@
 
   interface Emits {
     (e: 'update:visible', value: boolean): void
-    (e: 'submit', payload: { id?: number; gender: string; phone: string }): void
+    (e: 'submit'): void
   }
 
   const props = defineProps<Props>()
   const emit = defineEmits<Emits>()
 
   // 角色列表数据
-  const roleList = ref<{ roleName: string; roleCode: string }[]>([])
-  const loadRoleList = async () => {
-    try {
-      const res: any = await fetchGetRoleList({ current: 1, size: 100 })
-      const records = Array.isArray(res?.records) ? res.records : []
-      roleList.value = records.map((r: any) => ({ roleName: r.roleName, roleCode: r.roleCode }))
-    } catch {}
-  }
+  const roleList = ref(ROLE_LIST_DATA)
 
   // 对话框显示控制
   const dialogVisible = computed({
@@ -81,7 +74,7 @@
   const formData = reactive({
     username: '',
     phone: '',
-    gender: 1,
+    gender: '男',
     role: [] as string[]
   })
 
@@ -107,13 +100,10 @@
     const isEdit = props.type === 'edit' && props.userData
     const row = props.userData
 
-    const gRaw: any = isEdit && row ? row.userGender : undefined
-    const gNum = typeof gRaw === 'number' ? gRaw : parseInt(String(gRaw || '1')) || 1
-
     Object.assign(formData, {
       username: isEdit && row ? row.userName || '' : '',
       phone: isEdit && row ? row.userPhone || '' : '',
-      gender: gNum,
+      gender: isEdit && row ? row.userGender || '男' : '男',
       role: isEdit && row ? (Array.isArray(row.userRoles) ? row.userRoles : []) : []
     })
   }
@@ -127,7 +117,6 @@
     ([visible]) => {
       if (visible) {
         initFormData()
-        loadRoleList()
         nextTick(() => {
           formRef.value?.clearValidate()
         })
@@ -147,8 +136,7 @@
       if (valid) {
         ElMessage.success(dialogType.value === 'add' ? '添加成功' : '更新成功')
         dialogVisible.value = false
-        const id = props.userData?.id as any
-        emit('submit', { id, gender: formData.gender as any, phone: formData.phone })
+        emit('submit')
       }
     })
   }

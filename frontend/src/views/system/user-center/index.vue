@@ -149,7 +149,6 @@
 <script setup lang="ts">
   import { useUserStore } from '@/store/modules/user'
   import type { FormInstance, FormRules } from 'element-plus'
-  import { fetchProfileInfo, updateProfileInfo, updateProfilePassword } from '@/api/profile'
 
   defineOptions({ name: 'UserCenter' })
 
@@ -165,22 +164,22 @@
    * 用户信息表单
    */
   const form = reactive({
-    realName: '',
-    nikeName: '',
-    email: '',
-    mobile: '',
-    address: '',
-    sex: '1',
-    des: ''
+    realName: 'John Snow',
+    nikeName: '皮卡丘',
+    email: '59301283@mall.com',
+    mobile: '18888888888',
+    address: '广东省深圳市宝安区西乡街道101栋201',
+    sex: '2',
+    des: 'Art Design Pro 是一款兼具设计美学与高效开发的后台系统.'
   })
 
   /**
    * 密码修改表单
    */
   const pwdForm = reactive({
-    password: '',
-    newPassword: '',
-    confirmPassword: ''
+    password: '123456',
+    newPassword: '123456',
+    confirmPassword: '123456'
   })
 
   /**
@@ -214,20 +213,8 @@
    */
   const lableList: Array<string> = ['专注设计', '很有想法', '辣~', '大长腿', '川妹子', '海纳百川']
 
-  onMounted(async () => {
+  onMounted(() => {
     getDate()
-    try {
-      const data = await fetchProfileInfo()
-      Object.assign(form, {
-        realName: data.realName || '',
-        nikeName: data.nikeName || '',
-        email: data.email || '',
-        mobile: data.mobile || '',
-        address: data.address || '',
-        sex: String(data.sex ?? '1'),
-        des: data.des || ''
-      })
-    } catch {}
   })
 
   /**
@@ -247,37 +234,14 @@
   /**
    * 切换用户信息编辑状态
    */
-  const edit = async () => {
-    if (!isEdit.value) {
-      isEdit.value = true
-      return
-    }
-    await updateProfileInfo({
-      realName: form.realName,
-      nikeName: form.nikeName,
-      email: form.email,
-      mobile: form.mobile,
-      address: form.address,
-      sex: parseInt(form.sex || '1'),
-      des: form.des
-    })
-    isEdit.value = false
+  const edit = () => {
+    isEdit.value = !isEdit.value
   }
 
   /**
    * 切换密码编辑状态
    */
-  const editPwd = async () => {
-    if (!isEditPwd.value) {
-      isEditPwd.value = true
-      return
-    }
-    await updateProfilePassword({
-      password: pwdForm.password,
-      newPassword: pwdForm.newPassword,
-      confirmPassword: pwdForm.confirmPassword
-    })
-    isEditPwd.value = false
-    Object.assign(pwdForm, { password: '', newPassword: '', confirmPassword: '' })
+  const editPwd = () => {
+    isEditPwd.value = !isEditPwd.value
   }
 </script>

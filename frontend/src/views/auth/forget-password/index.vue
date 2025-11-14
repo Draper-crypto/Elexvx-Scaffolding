@@ -11,10 +11,20 @@
           <p class="sub-title">{{ $t('forgetPassword.subTitle') }}</p>
           <div class="mt-5">
             <span class="input-label" v-if="showInputLabel">账号</span>
-            <ElInput class="custom-height" :placeholder="$t('forgetPassword.placeholder')" v-model.trim="username" />
+            <ElInput
+              class="custom-height"
+              :placeholder="$t('forgetPassword.placeholder')"
+              v-model.trim="username"
+            />
           </div>
           <div style="margin-top: 15px">
-            <ElInput class="custom-height" placeholder="新密码" type="password" v-model.trim="newPassword" show-password />
+            <ElInput
+              class="custom-height"
+              placeholder="新密码"
+              type="password"
+              v-model.trim="newPassword"
+              show-password
+            />
           </div>
 
           <div style="margin-top: 15px">

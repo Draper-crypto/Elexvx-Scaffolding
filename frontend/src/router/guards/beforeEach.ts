@@ -48,7 +48,7 @@ import { staticRoutes } from '../routes/staticRoutes'
 import { loadingService } from '@/utils/ui'
 import { useCommon } from '@/hooks/core/useCommon'
 import { useWorktabStore } from '@/store/modules/worktab'
-import { fetchBootstrap } from '@/api/auth'
+import { fetchGetUserInfo } from '@/api/auth'
 import { ApiStatus } from '@/utils/http/status'
 import { isHttpError } from '@/utils/http/error'
 import { RouteRegistry, MenuProcessor, IframeRouteManager } from '../core'
@@ -152,12 +152,6 @@ async function handleRouteGuard(
 
   // 4. 处理已匹配的路由
   if (to.matched.length > 0) {
-    const hint = to.meta?.permissionHint as string | undefined
-    const perms = (useUserStore() as any).permissions as string[]
-    if (hint && Array.isArray(perms) && perms.length > 0 && !perms.includes(hint)) {
-      next({ name: 'Exception403' })
-      return
-    }
     setWorktab(to)
     setPageTitle(to)
     next()
@@ -225,28 +219,11 @@ async function handleDynamicRoutes(
   loadingService.showLoading()
 
   try {
-    // 1. 获取用户信息（若已存在则跳过）
-    let data: any = null
-    if (!useUserStore().getUserInfo?.id) {
-      const b = await fetchBootstrap()
-      data = b.user
-      const roleCodes = Array.isArray(data?.roles)
-        ? (data.roles as any[]).map((r: any) => r?.roleCode || r).map((c: string) => (c === 'ADMIN' ? 'R_ADMIN' : c === 'USER' ? 'R_USER' : c))
-        : []
-      useUserStore().setUserInfo({ ...data, roles: roleCodes })
-      if (Array.isArray(data?.permissions)) {
-        useUserStore().setPermissions(data.permissions as string[])
-      } else {
-        useUserStore().setPermissions([])
-      }
-      const menuStore = useMenuStore()
-      menuStore.setMenuList(b.menus as any[])
-    }
+    // 1. 获取用户信息
+    await fetchUserInfo()
 
-    // 2. 获取菜单数据（优先使用已缓存的菜单）
-    const menuStore = useMenuStore()
-    const cached = menuStore.menuList
-    const menuList = Array.isArray(cached) && cached.length > 0 ? cached : await menuProcessor.getMenuList()
+    // 2. 获取菜单数据
+    const menuList = await menuProcessor.getMenuList()
 
     // 3. 验证菜单数据
     if (!menuProcessor.validateMenuList(menuList)) {
@@ -256,10 +233,9 @@ async function handleDynamicRoutes(
     // 4. 注册动态路由
     routeRegistry?.register(menuList)
 
-    // 5. 保存菜单数据到 store（仅在未缓存时）
-    if (!(Array.isArray(cached) && cached.length > 0)) {
-      menuStore.setMenuList(menuList)
-    }
+    // 5. 保存菜单数据到 store
+    const menuStore = useMenuStore()
+    menuStore.setMenuList(menuList)
     menuStore.addRemoveRouteFns(routeRegistry?.getRemoveRouteFns() || [])
 
     // 6. 保存 iframe 路由
@@ -301,16 +277,8 @@ async function handleDynamicRoutes(
  */
 async function fetchUserInfo(): Promise<void> {
   const userStore = useUserStore()
-  const data: any = await fetchGetUserInfo()
-  const roleCodes = Array.isArray(data?.roles)
-    ? (data.roles as any[]).map((r: any) => r?.roleCode || r).map((c: string) => (c === 'ADMIN' ? 'R_ADMIN' : c === 'USER' ? 'R_USER' : c))
-    : []
-  userStore.setUserInfo({ ...data, roles: roleCodes })
-  if (Array.isArray(data?.permissions)) {
-    userStore.setPermissions(data.permissions as string[])
-  } else {
-    userStore.setPermissions([])
-  }
+  const data = await fetchGetUserInfo()
+  userStore.setUserInfo(data)
 }
 
 /**

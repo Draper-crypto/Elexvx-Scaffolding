@@ -18,7 +18,6 @@
             @keyup.enter="handleSubmit"
             style="margin-top: 25px"
           >
-            
             <ElFormItem prop="username">
               <ElInput
                 class="custom-height"
@@ -134,8 +133,6 @@
     formKey.value++
   })
 
-  
-
   const dragVerify = ref()
 
   const userStore = useUserStore()
@@ -162,7 +159,10 @@
     rolesLoading.value = true
     try {
       const { roles } = await fetchUserRoles(formData.username)
-      roleOptions.value = (roles || []).map((r: any) => ({ roleName: r.roleName, roleCode: r.roleCode }))
+      roleOptions.value = (roles || []).map((r: any) => ({
+        roleName: r.roleName,
+        roleCode: r.roleCode
+      }))
     } finally {
       rolesLoading.value = false
     }
@@ -185,8 +185,6 @@
   const loading = ref(false)
 
   onMounted(() => {})
-
-  
 
   // 登录
   const handleSubmit = async () => {
@@ -224,7 +222,9 @@
         raw = raw || boot.user
       } catch {}
       const roleCodes = Array.isArray((raw as any)?.roles)
-        ? ((raw as any).roles as any[]).map((r: any) => r?.roleCode || r).map((c: string) => (c === 'ADMIN' ? 'R_ADMIN' : c === 'USER' ? 'R_USER' : c))
+        ? ((raw as any).roles as any[])
+            .map((r: any) => r?.roleCode || r)
+            .map((c: string) => (c === 'ADMIN' ? 'R_ADMIN' : c === 'USER' ? 'R_USER' : c))
         : []
       userStore.setUserInfo({ ...(raw as any), roles: roleCodes })
       if (Array.isArray((raw as any)?.permissions)) {
@@ -280,5 +280,4 @@
   @import './style.css';
 </style>
 
-<style lang="scss" scoped>
-</style>
+<style lang="scss" scoped></style>

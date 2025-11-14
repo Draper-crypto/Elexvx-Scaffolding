@@ -31,6 +31,14 @@
         :value="option.value"
       />
     </ElSelect>
+
+    <!-- 文本输入类型 -->
+    <ElInput
+      v-else-if="config.type === 'input'"
+      :model-value="modelValue"
+      :style="config.style"
+      @input="handleChange"
+    />
   </div>
 </template>
 
@@ -40,7 +48,7 @@
   interface SettingItemConfig {
     key: string
     label: string
-    type: 'switch' | 'input-number' | 'select'
+    type: 'switch' | 'input-number' | 'select' | 'input'
     handler: string
     mobileHide?: boolean
     min?: number

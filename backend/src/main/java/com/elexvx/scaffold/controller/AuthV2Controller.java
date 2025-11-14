@@ -213,7 +213,7 @@ public class AuthV2Controller {
 
         java.util.Map<String, Object> resp = new java.util.HashMap<>();
         resp.put("user", dto);
-        resp.put("menus", roots);
+        resp.put("menus", dedupTree(roots));
         return resp;
     }
 
@@ -225,5 +225,58 @@ public class AuthV2Controller {
         String p = path.replaceAll("^/+", "").replaceAll("/+", "_");
         String s = p.substring(0, 1).toUpperCase() + (p.length() > 1 ? p.substring(1) : "");
         return s;
+    }
+
+    private java.util.List<java.util.Map<String, Object>> dedupTree(java.util.List<java.util.Map<String, Object>> roots) {
+        java.util.Map<String, java.util.Map<String, Object>> uniqueRoots = new java.util.HashMap<>();
+        for (java.util.Map<String, Object> root : roots) {
+            String key = buildKey(root);
+            java.util.Map<String, Object> exist = uniqueRoots.get(key);
+            if (exist == null) {
+                uniqueRoots.put(key, root);
+            } else {
+                mergeChildren(exist, root);
+            }
+        }
+        java.util.List<java.util.Map<String, Object>> result = new java.util.ArrayList<>(uniqueRoots.values());
+        for (java.util.Map<String, Object> r : result) {
+            dedupChildren(r);
+        }
+        return result;
+    }
+
+    private void dedupChildren(java.util.Map<String, Object> node) {
+        java.util.List<java.util.Map<String, Object>> children = (java.util.List<java.util.Map<String, Object>>) node.get("children");
+        if (children == null || children.isEmpty()) return;
+        java.util.Map<String, java.util.Map<String, Object>> unique = new java.util.HashMap<>();
+        for (java.util.Map<String, Object> c : children) {
+            String key = buildKey(c);
+            java.util.Map<String, Object> exist = unique.get(key);
+            if (exist == null) {
+                unique.put(key, c);
+            } else {
+                mergeChildren(exist, c);
+            }
+        }
+        java.util.List<java.util.Map<String, Object>> deduped = new java.util.ArrayList<>(unique.values());
+        node.put("children", deduped);
+        for (java.util.Map<String, Object> c : deduped) dedupChildren(c);
+    }
+
+    private void mergeChildren(java.util.Map<String, Object> target, java.util.Map<String, Object> source) {
+        java.util.List<java.util.Map<String, Object>> tc = (java.util.List<java.util.Map<String, Object>>) target.get("children");
+        java.util.List<java.util.Map<String, Object>> sc = (java.util.List<java.util.Map<String, Object>>) source.get("children");
+        if (tc == null) {
+            tc = new java.util.ArrayList<>();
+            target.put("children", tc);
+        }
+        if (sc == null || sc.isEmpty()) return;
+        tc.addAll(sc);
+    }
+
+    private String buildKey(java.util.Map<String, Object> node) {
+        String path = String.valueOf(node.getOrDefault("path", ""));
+        String comp = String.valueOf(node.getOrDefault("component", ""));
+        return (path + "|" + comp).toLowerCase();
     }
 }

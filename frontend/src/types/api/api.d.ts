@@ -66,7 +66,6 @@ declare namespace Api {
     interface LoginParams {
       userName: string
       password: string
-      roleCode?: string
     }
 
     /** 登录响应 */

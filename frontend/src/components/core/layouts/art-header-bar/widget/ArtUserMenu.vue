@@ -33,9 +33,17 @@
           </div>
         </div>
         <ul class="py-4 mt-3 border-t border-g-300/80">
-          <li class="btn-item" @click="goPage('/profile')">
+          <li class="btn-item" @click="goPage('/system/user-center')">
             <ArtSvgIcon icon="ri:user-3-line" />
             <span>{{ $t('topBar.user.userCenter') }}</span>
+          </li>
+          <li class="btn-item" @click="toDocs()">
+            <ArtSvgIcon icon="ri:book-2-line" />
+            <span>{{ $t('topBar.user.docs') }}</span>
+          </li>
+          <li class="btn-item" @click="toGithub()">
+            <ArtSvgIcon icon="ri:github-line" />
+            <span>{{ $t('topBar.user.github') }}</span>
           </li>
           <li class="btn-item" @click="lockScreen()">
             <ArtSvgIcon icon="ri:lock-line" />

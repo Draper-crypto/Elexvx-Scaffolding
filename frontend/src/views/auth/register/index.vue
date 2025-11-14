@@ -50,14 +50,22 @@
             </ElFormItem>
 
             <ElFormItem prop="gender">
-              <ElSelect v-model="formData.gender" class="w-full custom-height" placeholder="请选择性别">
+              <ElSelect
+                v-model="formData.gender"
+                class="w-full custom-height"
+                placeholder="请选择性别"
+              >
                 <ElOption label="男" value="男" />
                 <ElOption label="女" value="女" />
               </ElSelect>
             </ElFormItem>
 
             <ElFormItem prop="phone">
-              <ElInput class="custom-height" v-model.trim="formData.phone" placeholder="请输入手机号" />
+              <ElInput
+                class="custom-height"
+                v-model.trim="formData.phone"
+                placeholder="请输入手机号"
+              />
             </ElFormItem>
 
             <ElFormItem prop="agreement">
@@ -222,7 +230,9 @@
       await formRef.value.validate()
       loading.value = true
       const genderNum = formData.gender === '男' ? 1 : formData.gender === '女' ? 2 : 0
-      await (await import('@/api/auth')).fetchRegister({
+      await (
+        await import('@/api/auth')
+      ).fetchRegister({
         username: formData.username,
         password: formData.password,
         gender: genderNum,

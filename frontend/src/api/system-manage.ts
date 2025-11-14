@@ -23,11 +23,3 @@ export function fetchGetMenuList() {
     url: '/api/v3/system/menus'
   })
 }
-
-export function fetchUpdateUser(params: { id: number; gender?: number; phone?: string }) {
-  const { id, ...rest } = params
-  return request.put<void>({
-    url: `/api/user/${id}`,
-    params: rest
-  })
-}

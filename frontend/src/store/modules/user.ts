@@ -59,8 +59,6 @@ export const useUserStore = defineStore(
     const lockPassword = ref('')
     // 用户信息
     const info = ref<Partial<Api.Auth.UserInfo>>({})
-    // 用户权限
-    const permissions = ref<string[]>([])
     // 搜索历史记录
     const searchHistory = ref<AppRouteRecord[]>([])
     // 访问令牌
@@ -81,10 +79,6 @@ export const useUserStore = defineStore(
      */
     const setUserInfo = (newInfo: Api.Auth.UserInfo) => {
       info.value = newInfo
-    }
-
-    const setPermissions = (perms: string[]) => {
-      permissions.value = Array.isArray(perms) ? perms : []
     }
 
     /**
@@ -175,7 +169,6 @@ export const useUserStore = defineStore(
       isLock,
       lockPassword,
       info,
-      permissions,
       searchHistory,
       accessToken,
       refreshToken,
@@ -183,7 +176,6 @@ export const useUserStore = defineStore(
       getSettingState,
       getWorktabState,
       setUserInfo,
-      setPermissions,
       setLoginStatus,
       setLanguage,
       setSearchHistory,

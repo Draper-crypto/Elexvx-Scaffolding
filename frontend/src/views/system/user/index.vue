@@ -45,7 +45,7 @@
   import ArtButtonTable from '@/components/core/forms/art-button-table/index.vue'
   import { ACCOUNT_TABLE_DATA } from '@/mock/temp/formData'
   import { useTable } from '@/hooks/core/useTable'
-import { fetchGetUserList, fetchUpdateUser } from '@/api/system-manage'
+  import { fetchGetUserList, fetchUpdateUser } from '@/api/system-manage'
   import UserSearch from './modules/user-search.vue'
   import UserDialog from './modules/user-dialog.vue'
   import { ElTag, ElMessageBox, ElImage } from 'element-plus'
@@ -247,11 +247,22 @@ import { fetchGetUserList, fetchUpdateUser } from '@/api/system-manage'
   /**
    * 处理弹窗提交事件
    */
-  const handleDialogSubmit = async (payload: { id?: number; gender: number | string; phone: string }) => {
+  const handleDialogSubmit = async (payload: {
+    id?: number
+    gender: number | string
+    phone: string
+  }) => {
     try {
       const id = (currentUserData.value as any)?.id || payload.id
       if (id) {
-        const genderNum = typeof payload.gender === 'number' ? payload.gender : payload.gender === '男' ? 1 : payload.gender === '女' ? 2 : 0
+        const genderNum =
+          typeof payload.gender === 'number'
+            ? payload.gender
+            : payload.gender === '男'
+              ? 1
+              : payload.gender === '女'
+                ? 2
+                : 0
         await fetchUpdateUser({ id, gender: genderNum, phone: payload.phone })
         getData()
       }
