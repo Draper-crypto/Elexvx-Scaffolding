@@ -41,6 +41,7 @@
                 v-model="formData.roleCode"
                 placeholder="请选择角色"
                 :disabled="rolesLoading"
+                @visible-change="onRoleVisibleChange"
               >
                 <ElOption
                   v-for="r in roleOptions"
@@ -156,6 +157,7 @@
     formData.roleCode = ''
     roleOptions.value = []
     if (!formData.username) return
+    if (rolesLoading.value) return
     rolesLoading.value = true
     try {
       const { roles } = await fetchUserRoles(formData.username)
@@ -163,17 +165,25 @@
         roleName: r.roleName,
         roleCode: r.roleCode
       }))
-    } catch (e) {
+    } catch {
       roleOptions.value = []
     } finally {
       rolesLoading.value = false
     }
   }
+  const onRoleVisibleChange = async (visible: boolean) => {
+    if (!visible) return
+    if (!roleOptions.value.length) {
+      await loadRoles()
+    }
+  }
   watch(
     () => formData.username,
     (v, ov) => {
-      if (!v || v === ov) return
       if (rolesLoadTimer) clearTimeout(rolesLoadTimer)
+      formData.roleCode = ''
+      roleOptions.value = []
+      if (!v || v === ov) return
       rolesLoadTimer = setTimeout(loadRoles, 300)
     }
   )
@@ -181,10 +191,7 @@
   const rules = computed<FormRules>(() => ({
     username: [{ required: true, message: t('login.placeholder.username'), trigger: 'blur' }],
     password: [{ required: true, message: t('login.placeholder.password'), trigger: 'blur' }],
-    roleCode:
-      roleOptions.value.length > 0
-        ? [{ required: true, message: '请选择角色', trigger: 'change' }]
-        : []
+    roleCode: [{ required: true, message: '请选择角色', trigger: 'change' }]
   }))
 
   const loading = ref(false)
@@ -211,7 +218,7 @@
       // 登录请求
       const { username, password, roleCode } = formData
 
-      const { token, user } = await fetchLogin({ userName: username, password, roleCode })
+      const { token, user } = await fetchLogin({ username, password, roleCode })
 
       // 验证token
       if (!token) {
@@ -225,7 +232,9 @@
       try {
         boot = await fetchBootstrap()
         raw = raw || boot.user
-      } catch {}
+      } catch {
+        boot = null
+      }
       const roleCodes = Array.isArray((raw as any)?.roles)
         ? ((raw as any).roles as any[])
             .map((r: any) => r?.roleCode || r)

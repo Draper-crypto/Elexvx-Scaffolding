@@ -23,7 +23,7 @@ public class AuthService {
 
     public SysUser findByUsername(String username) {
         List<SysUser> list = jdbc.query(
-                "SELECT * FROM sys_user WHERE username = ? LIMIT 1",
+                "SELECT * FROM sys_user WHERE LOWER(username) = LOWER(?) LIMIT 1",
                 new BeanPropertyRowMapper<>(SysUser.class), username
         );
         return list.isEmpty() ? null : list.get(0);

@@ -22,6 +22,14 @@ public class DevUserSeedRunner implements ApplicationRunner {
 
     @Override
     public void run(ApplicationArguments args) {
+        List<com.elexvx.scaffold.entity.SysRole> adminRole = jdbc.query("SELECT * FROM sys_role WHERE role_code = ?", new BeanPropertyRowMapper<>(com.elexvx.scaffold.entity.SysRole.class), "ADMIN");
+        if (adminRole.isEmpty()) {
+            jdbc.update("INSERT INTO sys_role (id, role_name, role_code, status) VALUES (1, ?, ?, 1)", "管理员", "ADMIN");
+        }
+        List<com.elexvx.scaffold.entity.SysRole> userRole = jdbc.query("SELECT * FROM sys_role WHERE role_code = ?", new BeanPropertyRowMapper<>(com.elexvx.scaffold.entity.SysRole.class), "USER");
+        if (userRole.isEmpty()) {
+            jdbc.update("INSERT INTO sys_role (id, role_name, role_code, status) VALUES (2, ?, ?, 1)", "用户", "USER");
+        }
         String[] names = new String[]{"Super", "Admin", "User"};
         for (String name : names) {
             List<SysUser> list = jdbc.query("SELECT * FROM sys_user WHERE username = ?", new BeanPropertyRowMapper<>(SysUser.class), name);
@@ -29,9 +37,9 @@ public class DevUserSeedRunner implements ApplicationRunner {
                 String hash = authService.encodePassword("123456");
                 jdbc.update("INSERT INTO sys_user (username, password_hash, status, name) VALUES (?, ?, 1, ?)", name, hash, name);
                 if ("User".equals(name)) {
-                    jdbc.update("INSERT INTO sys_user_role (user_id, role_id) VALUES ((SELECT id FROM sys_user WHERE username = ?), 2)", name);
+                    jdbc.update("INSERT INTO sys_user_role (user_id, role_id) VALUES ((SELECT id FROM sys_user WHERE username = ?), (SELECT id FROM sys_role WHERE role_code = 'USER'))", name);
                 } else {
-                    jdbc.update("INSERT INTO sys_user_role (user_id, role_id) VALUES ((SELECT id FROM sys_user WHERE username = ?), 1)", name);
+                    jdbc.update("INSERT INTO sys_user_role (user_id, role_id) VALUES ((SELECT id FROM sys_user WHERE username = ?), (SELECT id FROM sys_role WHERE role_code = 'ADMIN'))", name);
                 }
             } else {
                 SysUser u = list.get(0);

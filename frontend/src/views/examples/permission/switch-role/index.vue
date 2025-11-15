@@ -179,7 +179,7 @@
 
       // 模拟登录请求
       const { token, refreshToken } = await fetchLogin({
-        userName: account.userName,
+        username: account.userName,
         password: account.password
       })
 

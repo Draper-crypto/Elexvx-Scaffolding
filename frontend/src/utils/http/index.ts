@@ -87,10 +87,15 @@ axiosInstance.interceptors.request.use(
 /** 响应拦截器 */
 axiosInstance.interceptors.response.use(
   (response: AxiosResponse<BaseResponse>) => {
-    const { code, msg } = response.data
-    if (code === ApiStatus.success) return response
-    if (code === ApiStatus.unauthorized) handleUnauthorizedError(msg)
-    throw createHttpError(msg || $t('httpMsg.requestFailed'), code)
+    const body: any = response.data
+    const code = body?.code
+    const msg = body?.msg
+    if (typeof code !== 'undefined') {
+      if (code === ApiStatus.success) return response
+      if (code === ApiStatus.unauthorized) handleUnauthorizedError(msg)
+      throw createHttpError(msg || $t('httpMsg.requestFailed'), code)
+    }
+    return response
   },
   (error) => {
     if (error.response?.status === ApiStatus.unauthorized) {
@@ -186,13 +191,14 @@ async function request<T = any>(config: ExtendedAxiosRequestConfig): Promise<T> 
 
   try {
     const res = await axiosInstance.request<BaseResponse<T>>(config)
-
-    // 显示成功消息
-    if (config.showSuccessMessage && res.data.msg) {
-      showSuccess(res.data.msg)
+    const payload: any = res.data
+    if (payload && typeof payload === 'object' && 'code' in payload) {
+      if (config.showSuccessMessage && payload.msg) {
+        showSuccess(payload.msg)
+      }
+      return payload.data as T
     }
-
-    return res.data.data as T
+    return payload as T
   } catch (error) {
     if (error instanceof HttpError && error.code !== ApiStatus.unauthorized) {
       const showMsg = config.showErrorMessage !== false
