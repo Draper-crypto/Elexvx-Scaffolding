@@ -40,7 +40,7 @@
                 class="w-full custom-height"
                 v-model="formData.roleCode"
                 placeholder="请选择角色"
-                :disabled="rolesLoading"
+                :loading="rolesLoading"
                 @visible-change="onRoleVisibleChange"
               >
                 <ElOption
