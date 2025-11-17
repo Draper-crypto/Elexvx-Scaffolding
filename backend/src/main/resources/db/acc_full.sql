@@ -95,6 +95,12 @@ CREATE TABLE IF NOT EXISTS sys_oper_log (
   created_at DATETIME DEFAULT CURRENT_TIMESTAMP
 );
 
+CREATE TABLE IF NOT EXISTS sys_param (
+  id BIGINT PRIMARY KEY AUTO_INCREMENT,
+  param_key VARCHAR(100) NOT NULL UNIQUE,
+  param_value VARCHAR(1000) NULL
+);
+
 INSERT IGNORE INTO sys_role (role_name, role_code, description, status) VALUES
 ('管理员', 'ADMIN', '系统管理员', 1),
 ('普通用户', 'USER', '普通用户角色', 1);
@@ -146,4 +152,23 @@ SELECT u.id, r.id FROM sys_user u JOIN sys_role r ON r.role_code='ADMIN' WHERE u
 
 INSERT IGNORE INTO sys_user_role (user_id, role_id)
 SELECT u.id, r.id FROM sys_user u JOIN sys_role r ON r.role_code='USER' WHERE u.username='User';
+
+INSERT INTO sys_param(param_key,param_value) VALUES('watermark.mode','username')
+ON DUPLICATE KEY UPDATE param_value=VALUES(param_value);
+
+INSERT INTO sys_param(param_key,param_value) VALUES('watermark.custom','')
+ON DUPLICATE KEY UPDATE param_value=VALUES(param_value);
+
+INSERT INTO sys_permission (perm_code, perm_name, perm_type, resource, action)
+VALUES ('sys:settings:watermark:update', '水印设置更新', 1, 'settings', 'watermark:update')
+ON DUPLICATE KEY UPDATE perm_name=VALUES(perm_name);
+
+INSERT INTO sys_permission (perm_code, perm_name, perm_type, resource, action)
+VALUES ('sys:settings:watermark:read', '水印设置读取', 1, 'settings', 'watermark:read')
+ON DUPLICATE KEY UPDATE perm_name=VALUES(perm_name);
+
+INSERT INTO sys_role_permission (role_id, permission_id)
+SELECT r.id, p.id FROM sys_role r JOIN sys_permission p ON p.perm_code IN ('sys:settings:watermark:update','sys:settings:watermark:read')
+WHERE r.role_code='ADMIN'
+ON DUPLICATE KEY UPDATE role_id=role_id;
 

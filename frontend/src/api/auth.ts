@@ -22,7 +22,9 @@ export function fetchBootstrap() {
 export function fetchUserRoles(username: string) {
   return request.get<{ roles: { roleName: string; roleCode: string }[] }>({
     url: '/api/auth/roles',
-    params: { username }
+    params: { username },
+    ignoreUnauthorized: true,
+    showErrorMessage: false
   })
 }
 
